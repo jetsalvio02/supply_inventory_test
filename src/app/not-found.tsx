@@ -13,7 +13,7 @@ const Error = () => {
       <div className='h-screen flex items-center justify-center bg-background'>
         <div className='text-center'>
           <Image
-            src={'/matdash-nextjs/images/backgrounds/errorimg.svg'}
+            src={'/images/backgrounds/errorimg.svg'}
             alt='error'
             className='mb-4'
             width={400}

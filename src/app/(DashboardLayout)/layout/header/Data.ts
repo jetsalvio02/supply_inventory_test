@@ -13,21 +13,21 @@ interface ProfileType {
 
 const profileDD: ProfileType[] = [
   {
-    img: "matdash-nextjs/images/svgs/icon-account.svg",
+    img: "/images/svgs/icon-account.svg",
     title: "My Profile",
     subtitle: "Account settings",
     icon:"tabler:user",
     url: "/user-profile",
   },
   {
-    img: "matdash-nextjs/images/svgs/icon-inbox.svg",
+    img: "/images/svgs/icon-inbox.svg",
     title: "My Account",
     subtitle: "My Daily Notes",
     icon:"tabler:mail",
     url: "/",
   },
   {
-    img: "matdash-nextjs/images/svgs/icon-tasks.svg",
+    img: "/images/svgs/icon-tasks.svg",
     title: "My Tasks",
     subtitle: "To-do and Daily tasks",
     icon:"tabler:list-check",

@@ -85,7 +85,7 @@ const UserProfile = () => {
                 <CardBox className="p-6 bg-background overflow-hidden border-none rounded-xl shadow-xs">
                     <div className="flex flex-col sm:flex-row items-center gap-6 rounded-xl relative w-full words-break">
                         <div>
-                            <Image src={"/matdash-nextjs/images/profile/user-1.jpg"} alt="image" width={80} height={80} className="rounded-full" />
+                            <Image src={"/images/profile/user-1.jpg"} alt="image" width={80} height={80} className="rounded-full" />
                         </div>
                         <div className="flex flex-wrap gap-4 justify-center sm:justify-between items-center w-full">
                             <div className="flex flex-col sm:text-left text-center gap-1.5">

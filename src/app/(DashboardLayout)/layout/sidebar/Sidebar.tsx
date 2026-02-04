@@ -108,7 +108,7 @@ const SidebarLayout = ({ onClose }: { onClose?: () => void }) => {
         <AMLogo component={Link} href='/' img=''>
           {/* <FullLogo /> */}
           <Image
-            src="/matdash-nextjs/images/logos/dark-logo.svg"
+            src="/images/logos/dark-logo.svg"
             alt="logo"
             width={135}
             height={40}

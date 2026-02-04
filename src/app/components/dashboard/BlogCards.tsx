@@ -7,8 +7,8 @@ import { Badge } from "@/components/ui/badge";
 
 const BlogCardsData = [
   {
-    avatar: "/matdash-nextjs/images/profile/user-2.jpg",
-    coveravatar: "/matdash-nextjs/images/blog/blog-img1.jpg",
+    avatar: "/images/profile/user-2.jpg",
+    coveravatar: "/images/blog/blog-img1.jpg",
     read: "2 min Read",
     title: "As yen tumbles, gadget-loving Japan goes for secondhand iPhones",
     category: "Social",
@@ -19,8 +19,8 @@ const BlogCardsData = [
     url: "",
   },
   {
-    avatar: "/matdash-nextjs/images/profile/user-3.jpg",
-    coveravatar: "/matdash-nextjs/images/blog/blog-img2.jpg",
+    avatar: "/images/profile/user-3.jpg",
+    coveravatar: "/images/blog/blog-img2.jpg",
     read: "2 min Read",
     title: "Intel loses bid to revive antitrust case against patent foe Fortress",
     category: "Gadget",
@@ -31,8 +31,8 @@ const BlogCardsData = [
     url: "",
   },
   {
-    avatar: "/matdash-nextjs/images/profile/user-4.jpg",
-    coveravatar: "/matdash-nextjs/images/blog/blog-img3.jpg",
+    avatar: "/images/profile/user-4.jpg",
+    coveravatar: "/images/blog/blog-img3.jpg",
     read: "2 min Read",
     title: "COVID outbreak deepens as more lockdowns loom in China",
     category: "Health",

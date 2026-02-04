@@ -43,7 +43,7 @@ const BreadcrumbComp = ({ items, title }: BreadCrumbType) => {
           </div>
           <div className='col-span-2 flex justify-center -mb-10'>
             <Image
-              src={'/matdash-nextjs/images/breadcrumb/ChatBc.png'}
+              src={'/images/breadcrumb/ChatBc.png'}
               alt=''
               className='md:-mb-[31px] -mb-4'
               width={140}
