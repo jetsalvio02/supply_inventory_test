@@ -145,7 +145,7 @@ const Header = () => {
                 </div>
 
                 {/* Profile Dropdown */}
-                <Profile />
+                {/* <Profile /> */}
               </div>
             </div>
           </div>

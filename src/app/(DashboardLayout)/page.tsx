@@ -11,29 +11,23 @@ const page = () => {
     <>
       <div className="grid grid-cols-12 gap-30">
         <div className="lg:col-span-8 col-span-12">
-          <RevenueForecast />
+          {/* <RevenueForecast /> */}
         </div>
         <div className="lg:col-span-4 col-span-12">
           <div className="grid grid-cols-12 h-full items-stretch">
-            <div className="col-span-12 mb-30">
-              <NewCustomers />
-            </div>
-            <div className="col-span-12">
-              <TotalIncome />
-            </div>
+            <div className="col-span-12 mb-30">{/* <NewCustomers /> */}</div>
+            <div className="col-span-12">{/* <TotalIncome /> */}</div>
           </div>
         </div>
         <div className="lg:col-span-8 col-span-12">
-          <ProductRevenue />
+          {/* <ProductRevenue /> */}
         </div>
         <div className="lg:col-span-4 col-span-12">
-          <DailyActivity />
+          {/* <DailyActivity /> */}
         </div>
-        <div className="col-span-12">
-          <BlogCards />
-        </div>
+        <div className="col-span-12">{/* <BlogCards /> */}</div>
         <div className="col-span-12 text-center">
-          <p className="text-base">
+          {/* <p className="text-base">
             Design and Developed by{" "}
             <Link
               href="https://adminmart.com/"
@@ -50,7 +44,7 @@ const page = () => {
             >
               ThemeWagon
             </Link>
-          </p>
+          </p> */}
         </div>
       </div>
     </>
