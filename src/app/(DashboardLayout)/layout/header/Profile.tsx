@@ -16,7 +16,10 @@ const Profile = () => {
     <div className="relative group/menu">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <span className="h-10 w-10 hover:text-primary hover:bg-lightprimary rounded-full flex justify-center items-center cursor-pointer group-hover/menu:bg-lightprimary group-hover/menu:text-primary">
+          <span
+            suppressHydrationWarning
+            className="h-10 w-10 hover:text-primary hover:bg-lightprimary rounded-full flex justify-center items-center cursor-pointer group-hover/menu:bg-lightprimary group-hover/menu:text-primary"
+          >
             <Image
               src="/images/profile/user-1.jpg"
               alt="Profile"

@@ -62,7 +62,7 @@ const Header = () => {
           </div>
 
           <div className="flex xl:hidden items-center">
-            <div
+            {/* <div
               className="hover:text-primary px-2 md:px-15 group focus:ring-0 rounded-full flex justify-center items-center cursor-pointer text-gray relative"
               onClick={toggleMode}
             >
@@ -77,7 +77,7 @@ const Header = () => {
                   />
                 )}
               </span>
-            </div>
+            </div> */}
 
             <div className="xl:block ">
               <div className="flex gap-0 items-center relative">
@@ -87,7 +87,7 @@ const Header = () => {
             </div>
 
             {/* Profile Dropdown */}
-            <Profile />
+            {/* <Profile /> */}
           </div>
 
           <div className="hidden xl:flex items-center justify-between w-full">
@@ -124,7 +124,7 @@ const Header = () => {
                   className="hover:text-primary px-15 group focus:ring-0 rounded-full flex justify-center items-center cursor-pointer text-gray relative"
                   onClick={toggleMode}
                 >
-                  <span className="flex items-center justify-center relative after:absolute after:w-10 after:h-10 after:rounded-full after:-top-1/2   group-hover:after:bg-lightprimary">
+                  {/* <span className="flex items-center justify-center relative after:absolute after:w-10 after:h-10 after:rounded-full after:-top-1/2   group-hover:after:bg-lightprimary">
                     {theme === "light" ? (
                       <Icon icon="tabler:moon" width="20" />
                     ) : (
@@ -134,7 +134,7 @@ const Header = () => {
                         className="group-hover:text-primary"
                       />
                     )}
-                  </span>
+                  </span> */}
                 </div>
 
                 <div className="xl:block ">

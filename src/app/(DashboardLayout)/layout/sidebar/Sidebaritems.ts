@@ -1,9 +1,11 @@
 import { uniqueId } from "lodash";
+import { List, History, LucideIcon, FileText } from "lucide-react";
+import { ReactNode } from "react";
 
 export interface ChildItem {
   id?: number | string;
   name?: string;
-  icon?: any;
+  icon?: LucideIcon;
   children?: ChildItem[];
   item?: any;
   url?: any;
@@ -18,7 +20,7 @@ export interface ChildItem {
 export interface MenuItem {
   heading?: string;
   name?: string;
-  icon?: any;
+  icon?: LucideIcon;
   id?: number;
   to?: string;
   items?: MenuItem[];
@@ -35,30 +37,47 @@ const SidebarContent: MenuItem[] = [
   {
     heading: "Menu",
     children: [
+      // {
+      //   name: "Product List",
+      //   icon: "solar:widget-add-line-duotone",
+      //   id: uniqueId(),
+      //   url: "/",
+      //   isPro: false,
+      // },
       {
         name: "Product List",
-        icon: "solar:widget-add-line-duotone",
+        // icon: "solar:widget-add-line-duotone",
+        icon: List,
         id: uniqueId(),
-        url: "/",
+        url: "/Item_List",
         isPro: false,
       },
-      {
-        name: "Stock In",
-        icon: "solar:widget-add-line-duotone",
-        id: uniqueId(),
-        url: "/#",
-        isPro: false,
-      },
-      {
-        name: "Stock Out",
-        icon: "solar:widget-add-line-duotone",
-        id: uniqueId(),
-        url: "/#",
-        isPro: false,
-      },
+      // {
+      //   name: "Stock In",
+      //   icon: "solar:widget-add-line-duotone",
+      //   id: uniqueId(),
+      //   url: "/user-profile",
+      //   isPro: false,
+      // },
+      // {
+      //   name: "Stock Out",
+      //   icon: "solar:widget-add-line-duotone",
+      //   id: uniqueId(),
+      //   url: "/#",
+      //   isPro: false,
+      // },
       {
         name: "History",
-        icon: "solar:widget-add-line-duotone",
+        // icon: "solar:widget-add-line-duotone",
+        icon: History,
+        id: uniqueId(),
+        url: "/History",
+        isPro: false,
+      },
+      {
+        name: "Reports",
+        // icon: "solar:widget-add-line-duotone",
+        icon: FileText,
         id: uniqueId(),
         url: "/#",
         isPro: false,

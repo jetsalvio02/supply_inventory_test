@@ -3,7 +3,6 @@ import Image from 'next/image'
 import { useTheme } from 'next-themes'
 import { usePathname } from 'next/navigation'
 import SidebarContent from './Sidebaritems'
-import SimpleBar from 'simplebar-react'
 import { Icon } from '@iconify/react'
 import FullLogo from '../shared/logo/FullLogo'
 import { Button } from '@/components/ui/button'
@@ -24,10 +23,10 @@ const renderSidebarItems = (
 ) => {
   return items.map((item, index) => {
     const isSelected = currentPath === item?.url
-    const IconComp = item.icon || null
+    const IconComponent = item.icon
 
-    const iconElement = IconComp ? (
-      <Icon icon={IconComp} height={21} width={21} />
+    const iconElement = IconComponent ? (
+      <IconComponent className='h-[21px] w-[21px]' />
     ) : (
       <Icon icon={'ri:checkbox-blank-circle-line'} height={9} width={9} />
     )
@@ -119,7 +118,7 @@ const SidebarLayout = ({ onClose }: { onClose?: () => void }) => {
 
       {/* Sidebar items */}
 
-      <SimpleBar className='h-[calc(100vh-10vh)]'>
+      <div className='h-n80 overflow-y-auto'>
         <div className='px-6'>
           {SidebarContent.map((section, index) => (
             <div key={index}>
@@ -134,7 +133,7 @@ const SidebarLayout = ({ onClose }: { onClose?: () => void }) => {
             </div>
           ))}
         </div>
-      </SimpleBar>
+      </div>
     </AMSidebar>
   )
 }

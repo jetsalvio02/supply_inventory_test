@@ -1,10 +1,5 @@
-import type { Config } from "drizzle-kit";
+import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-http";
 
-export default {
-  schema: "./lib/db/schema.ts",
-  out: "./drizzle",
-  dialect: "postgresql",
-  dbCredentials: {
-    url: process.env.DATABASE_URL!,
-  },
-} satisfies Config;
+const sql = neon(process.env.DATABASE_URL!);
+export const database = drizzle(sql);
