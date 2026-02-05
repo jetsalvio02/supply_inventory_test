@@ -17,7 +17,7 @@ export async function PUT(
     .set({
       name: body.name,
       description: body.description,
-      categoryId: body.categoryId,
+      // categoryId: body.categoryId,
       unitId: body.unitId,
     })
     .where(eq(items.id, Number(params.id)))
