@@ -2,18 +2,25 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
+import { Icon } from "@iconify/react";
 import FullLogo from "@/app/(Admin)/admin/layout/shared/logo/FullLogo";
 import { Button } from "@/components/ui/button";
 import Swal from "sweetalert2";
 
 const links = [
   { href: "/user", label: "Home" },
-  { href: "/Item_List", label: "Items" },
+  { href: "/user/Request_List", label: "Requests List" },
 ];
 
 export default function UserNavbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { theme, setTheme } = useTheme();
+
+  const toggleMode = () => {
+    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+  };
 
   return (
     <header className="border-b bg-background">
@@ -26,9 +33,10 @@ export default function UserNavbar() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* {links.map((link) => {
+          {links.map((link) => {
             const isActive =
-              pathname === link.href || pathname.startsWith(`${link.href}/`);
+              pathname === link.href ||
+              (link.href !== "/user" && pathname.startsWith(`${link.href}/`));
 
             return (
               <Button
@@ -40,7 +48,24 @@ export default function UserNavbar() {
                 <Link href={link.href}>{link.label}</Link>
               </Button>
             );
-          })} */}
+          })}
+
+          <div
+            className="hover:text-primary px-2 group focus:ring-0 rounded-full flex justify-center items-center cursor-pointer text-gray relative"
+            onClick={toggleMode}
+          >
+            <span className="flex items-center justify-center relative after:absolute after:w-10 after:h-10 after:rounded-full after:-top-1/2 group-hover:after:bg-lightprimary">
+              {theme === "light" ? (
+                <Icon icon="tabler:moon" width="20" />
+              ) : (
+                <Icon
+                  icon="solar:sun-bold-duotone"
+                  width="20"
+                  className="group-hover:text-primary"
+                />
+              )}
+            </span>
+          </div>
 
           <Button
             variant="outlineerror"

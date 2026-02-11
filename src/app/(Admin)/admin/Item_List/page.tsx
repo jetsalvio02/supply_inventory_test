@@ -236,41 +236,40 @@ export default function ItemInventoryList() {
   console.log(rows);
 
   const handleDelete = async (id: number) => {
-  const result = await Swal.fire({
-    title: "Are you sure?",
-    text: "This item will be permanently deleted.",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonColor: "#d33",
-    cancelButtonColor: "#3085d6",
-    confirmButtonText: "Yes, delete it!",
-    cancelButtonText: "Cancel",
-  });
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "This item will be permanently deleted.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!",
+      cancelButtonText: "Cancel",
+    });
 
-  if (!result.isConfirmed) return;
+    if (!result.isConfirmed) return;
 
-  await fetch(`/api/admin/items/${id}`, {
-    method: "DELETE",
-  });
+    await fetch(`/api/admin/items/${id}`, {
+      method: "DELETE",
+    });
 
-  setRows((prev) => prev.filter((row) => row.id !== id));
+    setRows((prev) => prev.filter((row) => row.id !== id));
 
-  Swal.fire({
-    title: "Deleted!",
-    text: "The item has been deleted.",
-    icon: "success",
-    timer: 1500,
-    showConfirmButton: false,
-  });
-};
-
+    Swal.fire({
+      title: "Deleted!",
+      text: "The item has been deleted.",
+      icon: "success",
+      timer: 1500,
+      showConfirmButton: false,
+    });
+  };
 
   /* ================================
      Search filter
   ================================ */
   const filteredRows = useMemo(() => {
     return rows.filter((r) =>
-      r.name.toLowerCase().includes(search.toLowerCase()),
+      r.name.toLowerCase().includes(search.toLowerCase())
     );
   }, [rows, search]);
 
@@ -317,10 +316,7 @@ export default function ItemInventoryList() {
           <Plus size={16} /> New Item
         </Button> */}
 
-         <Button
-          className="flex items-center gap-2 px-6"
-          variant={"success"}
-        >
+        <Button className="flex items-center gap-2 px-6" variant={"success"}>
           <FileSpreadsheet size={16} /> Export cvs.
         </Button>
       </div>
@@ -356,7 +352,6 @@ export default function ItemInventoryList() {
       </div> */}
 
       <div className="flex justify-end">
-        
         <Button
           onClick={() => {
             // setSelectedItem(null);
@@ -416,23 +411,26 @@ export default function ItemInventoryList() {
                     <td className="p-4 text-center text-red-700">
                       -{row.totalOut}
                     </td>
-                    <td className="p-4 text-center font-semibold">
-                      {balance}
-                    </td>
+                    <td className="p-4 text-center font-semibold">{balance}</td>
                     <td className="p-4">
                       <Badge variant={inStock ? "success" : "destructive"}>
                         {inStock ? "IN_STOCK" : "OUT_OF_STOCK"}
                       </Badge>
                     </td>
                     <td className="p-4 text-right">
-                      <Button className="me-2" size="icon" variant="info" onClick={() => {
-                        router.push(`${pathname}/${row.id}/Stock_Card`)
-                      }}>
+                      <Button
+                        className="me-2"
+                        size="icon"
+                        variant="info"
+                        onClick={() => {
+                          router.push(`${pathname}/${row.id}/Stock_Card`);
+                        }}
+                      >
                         <File size={14} />
                       </Button>
-                      <Button className="me-2" size="icon" variant="default">
+                      {/* <Button className="me-2" size="icon" variant="default">
                         <Eye size={14} />
-                      </Button>
+                      </Button> */}
                       <Button
                         className="me-2"
                         size="icon"

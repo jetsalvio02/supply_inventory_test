@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
+import Swal from "sweetalert2";
 
 export const Login = () => {
   const router = useRouter();
@@ -23,7 +24,11 @@ export const Login = () => {
     const trimmedPassword = password.trim();
 
     if (!trimmedAccount || !trimmedPassword) {
-      alert("Enter account number and password.");
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "Enter account number and password.",
+      });
       return;
     }
 
@@ -43,13 +48,21 @@ export const Login = () => {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        alert(data.message ?? "Login failed.");
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: data.message ?? "Login failed.",
+        });
         return;
       }
 
       router.push("/admin");
     } catch {
-      alert("Network error while logging in.");
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "Network error while logging in.",
+      });
     } finally {
       setLoading(false);
     }
