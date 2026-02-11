@@ -21,17 +21,12 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 
-import product1 from "../../../../../public/images/products/dash-prd-1.jpg";
-import product2 from "../../../../../public/images/products/dash-prd-2.jpg";
-import product3 from "../../../../../public/images/products/dash-prd-3.jpg";
-import product4 from "../../../../../public/images/products/dash-prd-4.jpg";
-import product5 from "../../../../../public/images/products/s5.jpg";
 import BreadcrumbComp from "../../layout/shared/breadcrumb/BreadcrumbComp";
 
 const PopularProducts = () => {
   const ProductTableData = [
     {
-      img: product1,
+      img: "/images/products/dash-prd-1.jpg",
       name: "iPhone 13 pro max-Pacific Blue-128GB storage",
       payment: "$180",
       paymentstatus: "Partially paid",
@@ -43,7 +38,7 @@ const PopularProducts = () => {
       bedgevariant: "lightSuccess"
     },
     {
-      img: product2,
+      img: "/images/products/dash-prd-2.jpg",
       name: "Apple MacBook Pro 13 inch-M1-8/256GB-space",
       payment: "$120",
       paymentstatus: "Full paid",
@@ -55,7 +50,7 @@ const PopularProducts = () => {
       bedgevariant: "lightSuccess"
     },
     {
-      img: product3,
+      img: "/images/products/dash-prd-3.jpg",
       name: "PlayStation 5 DualSense Wireless Controller",
       payment: "$120",
       paymentstatus: "Cancelled",
@@ -67,7 +62,7 @@ const PopularProducts = () => {
       bedgevariant: "lightError"
     },
     {
-      img: product5,
+      img: "/images/products/s5.jpg",
       name: "Amazon Basics Mesh, Mid-Back, Swivel Office",
       payment: "$120",
       paymentstatus: "Partially paid",
@@ -79,7 +74,7 @@ const PopularProducts = () => {
       bedgevariant: "lightSuccess"
     },
     {
-      img: product4,
+      img: "/images/products/dash-prd-4.jpg",
       name: "Sony X85J 75 Inch Sony 4K Ultra HD LED Smart",
       payment: "$120",
       paymentstatus: "Full paid",

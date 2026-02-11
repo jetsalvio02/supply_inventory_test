@@ -1,12 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { database } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
-export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(req: NextRequest, { params }: any) {
   try {
     const id = Number(params.id);
 
@@ -20,16 +17,16 @@ export async function GET(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, user: result[0] }, { status: 200 });
+    return NextResponse.json(
+      { success: true, user: result[0] },
+      { status: 200 }
+    );
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
-export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: NextRequest, { params }: any) {
   try {
     const id = Number(params.id);
 

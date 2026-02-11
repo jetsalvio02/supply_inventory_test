@@ -1,13 +1,16 @@
 import { database } from "@/lib/db";
 import { stockCards, inventoryTransactions, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 
-export async function GET(
-  req: Request,
-  { params }: { params: { id: string } },
-) {
-  const itemId = Number(params.id);
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const idParam = searchParams.get("id");
+  const itemId = Number(idParam);
+
+  if (!idParam || Number.isNaN(itemId)) {
+    return NextResponse.json([]);
+  }
 
   const data = await database
     .select({
@@ -23,7 +26,7 @@ export async function GET(
     .from(stockCards)
     .leftJoin(
       inventoryTransactions,
-      eq(stockCards.transactionId, inventoryTransactions.id),
+      eq(stockCards.transactionId, inventoryTransactions.id)
     )
     .leftJoin(users, eq(inventoryTransactions.userId, users.id))
     .where(eq(stockCards.itemId, itemId))

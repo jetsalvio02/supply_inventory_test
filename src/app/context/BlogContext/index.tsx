@@ -1,6 +1,6 @@
 'use client'
 import React, { createContext, useState, useEffect, ReactNode, Dispatch, SetStateAction } from 'react';
-import { BlogPostType, BlogType } from '@/app/(DashboardLayout)/types/blog';
+import { BlogPostType, BlogType } from '@/app/(Admin)/admin/types/blog';
 import { BlogPost } from '@/app/data/blog';
 
 export interface BlogContextProps {

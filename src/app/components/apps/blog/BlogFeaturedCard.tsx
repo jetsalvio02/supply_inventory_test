@@ -5,7 +5,7 @@ import { GoDot } from "react-icons/go";
 import { format } from "date-fns";
 import React, { useEffect, useContext } from "react";
 import { BlogContext, BlogContextProps } from "@/app/context/BlogContext/index";
-import { BlogPostType } from "@/app/(DashboardLayout)/types/blog";
+import { BlogPostType } from "@/app/(Admin)/admin/types/blog";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -37,7 +37,9 @@ const BlogFeaturedCard = ({ post, index }: Btype) => {
     <>
       {post ? (
         <div
-          className={`lg:col-span-${mainPost ? 8 : 4} md:col-span-12 col-span-12`}
+          className={`lg:col-span-${
+            mainPost ? 8 : 4
+          } md:col-span-12 col-span-12`}
         >
           <Card className="w-full h-[400px] p-0 overflow-hidden flex-row shadow-none feature-card relative card-hover">
             {/* Background Image */}

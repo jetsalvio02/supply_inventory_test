@@ -1,4 +1,4 @@
-import { NotesType } from "../(DashboardLayout)/types/apps/notes";
+import { NotesType } from "../(Admin)/admin/types/apps/notes";
 
 export const NotesData: NotesType[] = [
   {

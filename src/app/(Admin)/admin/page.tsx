@@ -1,9 +1,9 @@
-import RevenueForecast from "../components/dashboard/RevenueForecast";
-import NewCustomers from "../components/dashboard/NewCustomers";
-import TotalIncome from "../components/dashboard/TotalIncome";
-import ProductRevenue from "../components/dashboard/ProductRevenue";
-import DailyActivity from "../components/dashboard/DailyActivity";
-import BlogCards from "../components/dashboard/BlogCards";
+import RevenueForecast from "@/app/components/dashboard/RevenueForecast";
+import NewCustomers from "@/app/components/dashboard/NewCustomers";
+import TotalIncome from "@/app/components/dashboard/TotalIncome";
+import ProductRevenue from "@/app/components/dashboard/ProductRevenue";
+import DailyActivity from "@/app/components/dashboard/DailyActivity";
+import BlogCards from "@/app/components/dashboard/BlogCards";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 

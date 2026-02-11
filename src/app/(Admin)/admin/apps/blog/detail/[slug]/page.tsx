@@ -1,5 +1,5 @@
 
-import BreadcrumbComp from '@/app/(DashboardLayout)/layout/shared/breadcrumb/BreadcrumbComp';
+import BreadcrumbComp from '@/app/(Admin)/admin/layout/shared/breadcrumb/BreadcrumbComp';
 import BlogDetailData from '@/app/components/apps/blog/detail';
 import React from 'react'
 import { BlogProvider } from '@/app/context/BlogContext/index';

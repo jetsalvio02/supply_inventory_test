@@ -1,4 +1,4 @@
-import { BlogPostType, BlogType } from "../(DashboardLayout)/types/blog";
+import { BlogPostType, BlogType } from "../(Admin)/admin/types/blog";
 
 const BlogComment: BlogType[] = [
   {

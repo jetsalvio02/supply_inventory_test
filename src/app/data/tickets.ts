@@ -1,4 +1,4 @@
-import { TicketType } from "../(DashboardLayout)/types/ticket";
+import { TicketType } from "../(Admin)/admin/types/ticket";
 
 export const TicketData: TicketType[] = [
   {

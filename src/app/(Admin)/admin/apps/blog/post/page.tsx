@@ -1,5 +1,4 @@
-
-import BreadcrumbComp from "@/app/(DashboardLayout)/layout/shared/breadcrumb/BreadcrumbComp";
+import BreadcrumbComp from "@/app/(Admin)/admin/layout/shared/breadcrumb/BreadcrumbComp";
 import BlogPost from "@/app/components/apps/blog/BlogPost";
 import { Metadata } from "next";
 const BCrumb = [
@@ -17,8 +16,8 @@ export const metadata: Metadata = {
 const Blog = () => {
   return (
     <>
-     <BreadcrumbComp title="Blog app" items={BCrumb} />
-     <BlogPost/>
+      <BreadcrumbComp title="Blog app" items={BCrumb} />
+      <BlogPost />
     </>
   );
 };
