@@ -56,7 +56,11 @@ export const Login = () => {
         return;
       }
 
-      router.push("/admin");
+      if (data.user?.role === "admin") {
+        router.push("/admin");
+      } else {
+        router.push("/user");
+      }
     } catch {
       Swal.fire({
         icon: "error",
