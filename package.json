@@ -1,5 +1,5 @@
 {
-  "name": "matdash-nextjs-free",
+  "name": "supply_inventory",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -32,6 +32,8 @@
     "@tailwindcss/postcss": "^4.1.6",
     "aos": "2.3.4",
     "apexcharts": "3.49.1",
+    "axios": "^1.13.5",
+    "bcryptjs": "^3.0.3",
     "chance": "1.1.11",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -41,6 +43,7 @@
     "drizzle-orm": "^0.45.1",
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^12.31.0",
+    "html5-qrcode": "^2.3.8",
     "input-otp": "^1.4.2",
     "lodash": "^4.17.21",
     "lucide-react": "^0.540.0",
@@ -56,6 +59,7 @@
     "redux-persist": "6.0.0",
     "sharp": "0.32.6",
     "simplebar-react": "3.2.5",
+    "sweetalert2": "^11.26.18",
     "swiper": "^11.2.7",
     "swr": "^2.3.3",
     "tailwind-merge": "^3.3.1",

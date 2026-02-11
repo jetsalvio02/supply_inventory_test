@@ -7,8 +7,8 @@ import {
   timestamp,
   pgEnum,
   index,
-  numeric, // ← added for precise money values
-  boolean, // ← optional, added for soft-delete/visibility flags if needed
+  numeric, 
+  boolean, 
 } from "drizzle-orm/pg-core";
 
 /* =========================================================
@@ -29,9 +29,10 @@ export const itemStatusEnum = pgEnum("item_status", [
    USERS (unchanged)
 ========================================================= */
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
+  id: integer("id").primaryKey(),
   name: varchar("name", { length: 150 }).notNull(),
   role: varchar("role", { length: 50 }).default("staff"),
+  password: varchar("password", { length: 255 }).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -47,12 +48,12 @@ export const units = pgTable("units", {
 /* =========================================================
    SUPPLIERS (unchanged)
 ========================================================= */
-export const suppliers = pgTable("suppliers", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 255 }).notNull(),
-  contact: varchar("contact", { length: 100 }),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+// export const suppliers = pgTable("suppliers", {
+//   id: serial("id").primaryKey(),
+//   name: varchar("name", { length: 255 }).notNull(),
+//   contact: varchar("contact", { length: 100 }),
+//   createdAt: timestamp("created_at").defaultNow(),
+// });
 
 /* =========================================================
    CATEGORIES (unchanged)
@@ -75,6 +76,14 @@ export const items = pgTable(
     name: varchar("name", { length: 255 }).notNull(),
 
     description: varchar("description", { length: 255 }).notNull(),
+
+    beginingStock: integer("begining_stock").default(0),
+
+    newDeliveryStock: integer("new_delivery_stock").default(0),
+
+    releaseStock: integer("release_stock").default(0),
+
+    actualBalance: integer("actual_balance").default(0),
 
     // ── NEW ───────────────────────────────────────────────
     stockNo: varchar("stock_no", { length: 255 }), // e.g. internal stock/reference number if used
@@ -105,7 +114,7 @@ export const items = pgTable(
     // categoryIdx: index("items_category_idx").on(table.categoryId),
     // optional: add index if you query by stock number frequently
     stockNoIdx: index("items_stock_no_idx").on(table.stockNo),
-  }),
+  })
 );
 
 /* =========================================================
@@ -120,7 +129,7 @@ export const inventoryTransactions = pgTable(
       .references(() => items.id, { onDelete: "cascade" })
       .notNull(),
 
-    supplierId: integer("supplier_id").references(() => suppliers.id),
+    // supplierId: integer("supplier_id").references(() => suppliers.id),
 
     userId: integer("user_id")
       .references(() => users.id)
@@ -133,7 +142,7 @@ export const inventoryTransactions = pgTable(
     // ── NEW ───────────────────────────────────────────────
     unitCost: numeric("unit_cost", { precision: 12, scale: 2 }).default("0.00"),
     totalCost: numeric("total_cost", { precision: 14, scale: 2 }).default(
-      "0.00",
+      "0.00"
     ),
     // These two allow you to record historical purchase prices per transaction
     // Very useful when unit cost changes over time
@@ -145,7 +154,7 @@ export const inventoryTransactions = pgTable(
   },
   (table) => ({
     itemIdx: index("inv_tx_item_idx").on(table.itemId),
-  }),
+  })
 );
 
 /* =========================================================
@@ -201,5 +210,5 @@ export const stockCards = pgTable(
   },
   (table) => ({
     itemIdx: index("stock_card_item_idx").on(table.itemId),
-  }),
+  })
 );

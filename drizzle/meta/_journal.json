@@ -15,6 +15,41 @@
       "when": 1770268194050,
       "tag": "0001_cute_sunspot",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1770599162118,
+      "tag": "0002_cheerful_raza",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1770599443707,
+      "tag": "0003_steep_guardsmen",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1770691102552,
+      "tag": "0004_petite_green_goblin",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1770701103450,
+      "tag": "0005_blushing_maverick",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1770711068159,
+      "tag": "0006_parched_mentor",
+      "breakpoints": true
     }
   ]
 }
