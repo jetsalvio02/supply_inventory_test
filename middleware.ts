@@ -16,8 +16,15 @@ export function middleware(req: NextRequest) {
 
   const role = req.cookies.get("userRole")?.value;
 
-  if (!role || (role !== "admin" && role !== "Administrator")) {
+  const isAdminRoute = pathname.startsWith("/admin");
+  const isUserRoute = pathname.startsWith("/user");
+
+  if ((isAdminRoute || isUserRoute) && !role) {
     return NextResponse.redirect(new URL("/", req.url));
+  }
+
+  if (isAdminRoute && role !== "admin" && role !== "Administrator") {
+    return NextResponse.redirect(new URL("/user", req.url));
   }
 
   return NextResponse.next();
