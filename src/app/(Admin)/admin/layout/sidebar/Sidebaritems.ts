@@ -7,6 +7,8 @@ import {
   Info,
   Users,
   ListOrdered,
+  LayoutDashboard,
+  Settings,
 } from "lucide-react";
 import { ReactNode } from "react";
 
@@ -53,6 +55,13 @@ const SidebarContent: MenuItem[] = [
       //   isPro: false,
       // },
       {
+        name: "Dashboard",
+        icon: LayoutDashboard,
+        id: uniqueId(),
+        url: "/admin",
+        isPro: false,
+      },
+      {
         name: "Items List",
         // icon: "solar:widget-add-line-duotone",
         icon: List,
@@ -64,16 +73,24 @@ const SidebarContent: MenuItem[] = [
         name: "Item Stock In/Out",
         icon: Info,
         id: uniqueId(),
-        url: "/#",
+        url: "/admin/Items_Stock",
         isPro: false,
       },
       {
         name: "Request List",
         icon: ListOrdered,
         id: uniqueId(),
-        url: "/#",
+        url: "/admin/Request_List",
         isPro: false,
       },
+      {
+        name: "Requisition and Issue",
+        icon: FileText,
+        id: uniqueId(),
+        url: "/admin/Requisition_and_Issue",
+        isPro: false,
+      },
+
       // {
       //   name: "Stock In",
       //   icon: "solar:widget-add-line-duotone",
@@ -88,14 +105,13 @@ const SidebarContent: MenuItem[] = [
       //   url: "/#",
       //   isPro: false,
       // },
-      {
-        name: "History",
-        // icon: "solar:widget-add-line-duotone",
-        icon: History,
-        id: uniqueId(),
-        url: "/admin/History",
-        isPro: false,
-      },
+      // {
+      //   name: "History",
+      //   icon: History,
+      //   id: uniqueId(),
+      //   url: "/admin/History",
+      //   isPro: false,
+      // },
       // {
       //   name: "Reports",
       //   // icon: "solar:widget-add-line-duotone",
@@ -110,10 +126,10 @@ const SidebarContent: MenuItem[] = [
     heading: "Reports",
     children: [
       {
-        name: "",
+        name: "Supplies Report",
         icon: FileText,
         id: uniqueId(),
-        url: "/#",
+        url: "/admin/Reports",
         isPro: false,
       },
     ],
@@ -126,6 +142,18 @@ const SidebarContent: MenuItem[] = [
         icon: Users,
         id: uniqueId(),
         url: "/admin/Users",
+        isPro: false,
+      },
+    ],
+  },
+  {
+    heading: "Settings",
+    children: [
+      {
+        name: "Settings",
+        icon: Settings,
+        id: uniqueId(),
+        url: "/admin/Settings",
         isPro: false,
       },
     ],

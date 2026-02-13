@@ -26,6 +26,9 @@ export default function EditItemPage() {
     stockNo: "",
     unitId: "",
     unitCost: "",
+    totalCost: 0,
+    beginning_stock: "",
+    new_delivery: "",
   });
 
   /* ================================
@@ -48,15 +51,22 @@ export default function EditItemPage() {
         const data = await res.json().catch(() => null);
         if (!data) return;
 
+        const qty = data.beginingStock ? Number(data.beginingStock) : 0;
+        const unitCostNum = data.unitCost ? Number(data.unitCost) : 0;
+
         setForm({
           name: data.name ?? "",
           description: data.description ?? "",
           stockNo: data.stockNo ?? "",
           unitId: data.unitId ? String(data.unitId) : "",
           unitCost: data.unitCost ? String(data.unitCost) : "",
+          totalCost: qty * unitCostNum,
+          beginning_stock: data.beginingStock ? String(data.beginingStock) : "",
+          new_delivery: data.newDeliveryStock
+            ? String(data.newDeliveryStock)
+            : "",
         });
-      } catch {
-      }
+      } catch {}
     };
 
     loadItem();
@@ -102,10 +112,11 @@ export default function EditItemPage() {
         stockNo: form.stockNo || null,
         unitId: Number(form.unitId || 0),
         unitCost: Number(form.unitCost || 0),
+        totalCost: Number(form.totalCost || 0),
       }),
     });
 
-    router.push("/Item_List");
+    router.push("/admin/Item_List");
   };
 
   return (
@@ -140,9 +151,7 @@ export default function EditItemPage() {
                 <Input
                   placeholder="Enter item name"
                   value={form.name}
-                  onChange={(e) =>
-                    setForm({ ...form, name: e.target.value })
-                  }
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
                 />
               </div>
 
@@ -156,6 +165,24 @@ export default function EditItemPage() {
                   onChange={(e) =>
                     setForm({ ...form, description: e.target.value })
                   }
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-slate-700">
+                  Beginning stock
+                </label>
+                <Input placeholder="0" value={form.beginning_stock} disabled />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-slate-700">
+                  New delivery stock
+                </label>
+                <Input
+                  placeholder="Matches beginning stock"
+                  value={form.new_delivery}
+                  disabled
                 />
               </div>
 
@@ -181,10 +208,29 @@ export default function EditItemPage() {
                   step="0.01"
                   placeholder="0.00"
                   value={form.unitCost}
-                  onChange={(e) =>
-                    setForm({ ...form, unitCost: e.target.value })
-                  }
+                  onChange={(e) => {
+                    const unitCostValue = e.target.value;
+                    const qty = Number(form.beginning_stock || 0);
+                    const unitCost = Number(unitCostValue || 0);
+                    setForm({
+                      ...form,
+                      unitCost: unitCostValue,
+                      totalCost: qty * unitCost,
+                    });
+                  }}
                 />
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-slate-700">
+                    Total cost
+                  </label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={form.totalCost}
+                    disabled
+                  />
+                </div>
               </div>
             </div>
 
@@ -196,9 +242,7 @@ export default function EditItemPage() {
                 <select
                   className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
                   value={form.unitId}
-                  onChange={(e) =>
-                    setForm({ ...form, unitId: e.target.value })
-                  }
+                  onChange={(e) => setForm({ ...form, unitId: e.target.value })}
                 >
                   <option value="">Select unit</option>
                   {units.map((u) => (

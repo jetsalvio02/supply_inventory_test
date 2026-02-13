@@ -7,10 +7,12 @@ import { Icon } from "@iconify/react";
 import FullLogo from "@/app/(Admin)/admin/layout/shared/logo/FullLogo";
 import { Button } from "@/components/ui/button";
 import Swal from "sweetalert2";
+import { Home, User, ListChecks } from "lucide-react";
 
 const links = [
-  { href: "/user", label: "Home" },
-  { href: "/user/Request_List", label: "Requests List" },
+  { href: "/user", label: "Home", icon: Home },
+  { href: "/user/Profile", label: "Profile", icon: User },
+  { href: "/user/Request_List", label: "Requests List", icon: ListChecks },
 ];
 
 export default function UserNavbar() {
@@ -24,16 +26,17 @@ export default function UserNavbar() {
 
   return (
     <header className="border-b bg-background">
-      <nav className="container mx-auto flex items-center justify-between px-6 py-3">
-        <div className="flex items-center gap-3">
+      <nav className="container mx-auto flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:flex-nowrap sm:px-6">
+        <div className="flex items-center gap-2 sm:gap-3">
           <FullLogo />
           <span className="text-sm font-medium text-muted-foreground">
             User Portal
           </span>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 justify-end">
           {links.map((link) => {
+            const IconComponent = link.icon;
             const isActive =
               pathname === link.href ||
               (link.href !== "/user" && pathname.startsWith(`${link.href}/`));
@@ -45,7 +48,10 @@ export default function UserNavbar() {
                 variant={isActive ? "default" : "ghost"}
                 className="text-sm"
               >
-                <Link href={link.href}>{link.label}</Link>
+                <Link href={link.href} className="flex items-center gap-1.5">
+                  <IconComponent className="w-4 h-4" />
+                  <span>{link.label}</span>
+                </Link>
               </Button>
             );
           })}

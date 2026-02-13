@@ -373,21 +373,27 @@ export default function UsersPage() {
         </CardContent>
       </Card>
 
-      <Card className="rounded-2xl">
+      <Card className="rounded-2xl border border-border/60 dark:border-white/5 bg-card/80 dark:bg-white/[0.03] shadow-sm">
         <CardContent className="overflow-x-auto p-0">
-          <table className="w-full text-sm">
-            <thead className="bg-muted">
+          <table className="w-full text-sm text-foreground/90">
+            <thead className="bg-muted/80 dark:bg-white/[0.04] border-b border-border/60 dark:border-white/10">
               <tr>
-                <th className="p-4 text-left">Name</th>
-                <th className="p-4 text-left">ID</th>
-                <th className="p-4 text-right">Actions</th>
+                <th className="p-4 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Name
+                </th>
+                <th className="p-4 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  ID
+                </th>
+                <th className="p-4 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Actions
+                </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-border/60 dark:divide-white/5">
               {filteredUsers.map((user) => (
                 <tr
                   key={user.id}
-                  className="border-b text-sm last:border-b-0 hover:bg-muted/50"
+                  className="text-sm bg-background/40 dark:bg-transparent hover:bg-muted/40 dark:hover:bg-white/[0.06] transition-colors"
                 >
                   <td className="p-4 font-medium">{user.name}</td>
                   <td className="p-4">{user.id}</td>

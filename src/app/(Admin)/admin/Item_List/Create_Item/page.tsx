@@ -32,6 +32,7 @@ export default function CreateItemPage() {
     // categoryId: "",
     unitId: "",
     unitCost: "",
+    totalCost: 0,
     beginning_stock: "",
     new_delivery: "",
   });
@@ -83,12 +84,13 @@ export default function CreateItemPage() {
         // categoryId: Number(form.categoryId),
         unitId: Number(form.unitId || 0),
         unitCost: Number(form.unitCost || 0),
+        totalCost: Number(form.totalCost || 0),
         beginningStock: Number(form.beginning_stock || 0),
         newDelivery: Number(form.new_delivery || 0),
       }),
     });
 
-    router.push("/Item_List");
+    router.push("/admin/Item_List");
   };
 
   return (
@@ -149,10 +151,13 @@ export default function CreateItemPage() {
                   value={form.beginning_stock}
                   onChange={(e) => {
                     const value = e.target.value;
+                    const qty = Number(value || 0);
+                    const unitCost = Number(form.unitCost || 0);
                     setForm({
                       ...form,
                       beginning_stock: value,
                       new_delivery: value,
+                      totalCost: qty * unitCost,
                     });
                   }}
                 />
@@ -194,10 +199,28 @@ export default function CreateItemPage() {
                   step="0.01"
                   placeholder="0.00"
                   value={form.unitCost}
-                  onChange={(e) =>
-                    setForm({ ...form, unitCost: e.target.value })
-                  }
+                  onChange={(e) => {
+                    const unitCostValue = e.target.value;
+                    const qty = Number(form.beginning_stock || 0);
+                    const unitCost = Number(unitCostValue || 0);
+                    setForm({
+                      ...form,
+                      unitCost: unitCostValue,
+                      totalCost: qty * unitCost,
+                    });
+                  }}
                 />
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-slate-700">
+                    Total cost
+                  </label>
+                  <Input
+                    type="number"
+                    placeholder="0.00"
+                    value={form.totalCost}
+                    disabled
+                  />
+                </div>
               </div>
             </div>
 

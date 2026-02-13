@@ -195,7 +195,14 @@ import {
 import { motion } from "framer-motion";
 import ItemFormModal from "./Item_Form_Modal/page";
 import { usePathname, useRouter } from "next/navigation";
-// import { ExportCsvButton } from "./ExportCsvButton";
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+
+const queryClient = new QueryClient();
 
 /* ================================
    Types aligned with schema
@@ -203,9 +210,9 @@ import { usePathname, useRouter } from "next/navigation";
 interface InventoryRow {
   id: number;
   name: string;
+  description: string;
   // category: string;
   beginingStock: number;
-  totalIn: number;
   totalOut: number;
   actualBalance: number;
   newDeliveryStock: number;
@@ -213,27 +220,27 @@ interface InventoryRow {
   updatedAt: string;
 }
 
-/* ================================4
-   Component
-================================ */
-export default function ItemInventoryList() {
+function ItemInventoryListInner() {
   const router = useRouter();
   const pathname = usePathname();
-  const [rows, setRows] = useState<InventoryRow[]>([]);
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
-  /* ================================
-     Fetch inventory data
-  ================================ */
-  useEffect(() => {
-    fetch("/api/admin/items")
-      .then((res) => res.json())
-      .then(setRows);
-  }, []);
+  const queryClient = useQueryClient();
 
-  console.log(rows);
+  const { data: rows = [] } = useQuery<InventoryRow[]>({
+    queryKey: ["admin-items"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/items");
+      if (!res.ok) {
+        throw new Error("Failed to load items");
+      }
+      return res.json();
+    },
+  });
 
   const handleDelete = async (id: number) => {
     const result = await Swal.fire({
@@ -253,7 +260,10 @@ export default function ItemInventoryList() {
       method: "DELETE",
     });
 
-    setRows((prev) => prev.filter((row) => row.id !== id));
+    queryClient.setQueryData<InventoryRow[] | undefined>(
+      ["admin-items"],
+      (prev) => (prev ?? []).filter((row) => row.id !== id)
+    );
 
     Swal.fire({
       title: "Deleted!",
@@ -273,14 +283,34 @@ export default function ItemInventoryList() {
     );
   }, [rows, search]);
 
+  const totalPages = useMemo(() => {
+    if (!filteredRows.length) return 1;
+    return Math.ceil(filteredRows.length / pageSize);
+  }, [filteredRows.length, pageSize]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+
+  const paginatedRows = useMemo(
+    () => filteredRows.slice(startIndex, endIndex),
+    [filteredRows, startIndex, endIndex]
+  );
+
   /* ================================
      CSV export mapping
   ================================ */
   const csvData = filteredRows.map((r) => {
-    const balance =
-      (r.actualBalance ?? 0) +
-      (r.newDeliveryStock ?? 0) -
-      (r.releaseStock ?? 0);
+    const balance = r.actualBalance ?? 0;
 
     return {
       Item: r.name,
@@ -371,28 +401,39 @@ export default function ItemInventoryList() {
       </div>
 
       {/* Inventory Table */}
-      <Card className="rounded-2xl">
+      <Card className="rounded-2xl border border-border/60 dark:border-white/5 bg-card/80 dark:bg-white/[0.03] shadow-sm">
         <CardContent className="p-0 overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-muted">
+          <table className="w-full text-sm text-foreground/90">
+            <thead className="bg-muted/80 dark:bg-white/[0.04] border-b border-border/60 dark:border-white/10">
               <tr>
-                <th className="p-4 text-left">Item</th>
+                <th className="p-4 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Item
+                </th>
                 {/* <th className="p-4 text-left">Category</th> */}
-                <th className="p-4">Beginning</th>
-                <th className="p-4">IN</th>
-                <th className="p-4">OUT</th>
-                <th className="p-4">Balance</th>
-                <th className="p-4">Status</th>
-                <th className="p-4 text-right">Action</th>
+                <th className="p-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground text-center">
+                  Beginning
+                </th>
+                <th className="p-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground text-center">
+                  IN
+                </th>
+                <th className="p-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground text-center">
+                  OUT
+                </th>
+                <th className="p-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground text-center">
+                  Balance
+                </th>
+                <th className="p-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Status
+                </th>
+                <th className="p-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground text-right">
+                  Action
+                </th>
               </tr>
             </thead>
 
-            <tbody>
-              {filteredRows.map((row) => {
-                const balance =
-                  (row.actualBalance ?? 0) +
-                  (row.newDeliveryStock ?? 0) -
-                  (row.releaseStock ?? 0);
+            <tbody className="divide-y divide-border/60 dark:divide-white/5">
+              {paginatedRows.map((row) => {
+                const balance = row.actualBalance ?? 0;
                 const inStock = balance > 0;
 
                 return (
@@ -400,9 +441,11 @@ export default function ItemInventoryList() {
                     key={row.id}
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="border-b hover:bg-muted/50"
+                    className="bg-background/40 dark:bg-transparent hover:bg-muted/40 dark:hover:bg-white/[0.06] transition-colors"
                   >
-                    <td className="p-4 font-medium">{row.name}</td>
+                    <td className="p-4 font-medium">
+                      {`${row.name} (${row.description})`}
+                    </td>
                     {/* <td className="p-4">{row.category}</td> */}
                     <td className="p-4 text-center">{row.beginingStock}</td>
                     <td className="p-4 text-center text-green-700">
@@ -455,8 +498,53 @@ export default function ItemInventoryList() {
               })}
             </tbody>
           </table>
+          {filteredRows.length > 0 && (
+            <div className="flex flex-col md:flex-row items-center justify-between gap-2 px-4 py-3 border-t text-xs md:text-sm">
+              <div>
+                Showing{" "}
+                {`${Math.min(startIndex + 1, filteredRows.length)}-${Math.min(
+                  endIndex,
+                  filteredRows.length
+                )}`}{" "}
+                of {filteredRows.length} items
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage <= 1}
+                  onClick={() =>
+                    setCurrentPage((page) => Math.max(1, page - 1))
+                  }
+                >
+                  Previous
+                </Button>
+                <span>
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage >= totalPages}
+                  onClick={() =>
+                    setCurrentPage((page) => Math.min(totalPages, page + 1))
+                  }
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function ItemInventoryList() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ItemInventoryListInner />
+    </QueryClientProvider>
   );
 }

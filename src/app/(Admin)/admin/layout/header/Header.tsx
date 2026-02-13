@@ -112,8 +112,14 @@ const Header = () => {
               </div>
             </div>
 
-            {/* Profile Dropdown */}
-            {/* <Profile /> */}
+            <Button
+              className="ml-2 text-white"
+              size="icon"
+              variant="destructive"
+              onClick={handleLogout}
+            >
+              <LogOutIcon className="w-4 h-4" />
+            </Button>
           </div>
 
           <div className="hidden xl:flex items-center justify-between w-full">

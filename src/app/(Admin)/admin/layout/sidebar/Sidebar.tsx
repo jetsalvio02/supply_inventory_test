@@ -115,16 +115,16 @@ const SidebarLayout = ({ onClose }: { onClose?: () => void }) => {
       className="fixed left-0 top-0 border-none bg-background z-10 h-screen"
     >
       {/* Logo */}
-      <div className="px-4 flex items-center brand-logo overflow-hidden">
-        <AMLogo component={Link} href="/" img="">
-          {/* <FullLogo /> */}
-          <Image
+      <div className="px-4 flex justify-center items-center brand-logo overflow-hidden">
+        <AMLogo component={Link} img="">
+          <FullLogo />
+          {/* <Image
             src="/images/logos/dark-logo.svg"
             alt="logo"
             width={135}
             height={40}
             className="rtl:scale-x-[-1]"
-          />
+          /> */}
         </AMLogo>
       </div>
 

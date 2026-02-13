@@ -1,0 +1,1 @@
+ALTER TABLE "items" ADD COLUMN "total_cost" numeric(12, 2) DEFAULT '0.00';

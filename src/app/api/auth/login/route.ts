@@ -3,6 +3,13 @@ import { database } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
+
+const authCookieSecret = process.env.AUTH_COOKIE_SECRET || "dev-secret";
+
+function signAuthValue(value: string) {
+  return crypto.createHmac("sha256", authCookieSecret).update(value).digest("hex");
+}
 
 export async function POST(req: Request) {
   try {
@@ -41,6 +48,9 @@ export async function POST(req: Request) {
       );
     }
 
+    const baseValue = `${user.id}:${user.role ?? "staff"}`;
+    const signature = signAuthValue(baseValue);
+
     const res = NextResponse.json({
       success: true,
       user: {
@@ -59,6 +69,14 @@ export async function POST(req: Request) {
     });
 
     res.cookies.set("userRole", user.role ?? "staff", {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+    });
+
+    res.cookies.set("userSig", signature, {
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",

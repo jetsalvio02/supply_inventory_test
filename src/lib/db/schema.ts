@@ -7,8 +7,8 @@ import {
   timestamp,
   pgEnum,
   index,
-  numeric, 
-  boolean, 
+  numeric,
+  boolean,
 } from "drizzle-orm/pg-core";
 
 /* =========================================================
@@ -99,6 +99,9 @@ export const items = pgTable(
 
     // ── NEW ───────────────────────────────────────────────
     unitCost: numeric("unit_cost", { precision: 12, scale: 2 }).default("0.00"), // e.g. 240.00, 15.00, 600.00
+    totalCost: numeric("total_cost", { precision: 12, scale: 2 }).default(
+      "0.00"
+    ), // e.g. 240.00, 15.00, 600.00
     // Useful for quick reference / reports / PO recreation
     // ──────────────────────────────────────────────────────
 
@@ -212,3 +215,28 @@ export const stockCards = pgTable(
     itemIdx: index("stock_card_item_idx").on(table.itemId),
   })
 );
+
+export const risRequests = pgTable("ris_requests", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .references(() => users.id, { onDelete: "set null" })
+    .notNull(),
+  purpose: text("purpose"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const risRequestItems = pgTable("ris_request_items", {
+  id: serial("id").primaryKey(),
+  requestId: integer("request_id")
+    .references(() => risRequests.id, { onDelete: "cascade" })
+    .notNull(),
+  itemId: integer("item_id").references(() => items.id, {
+    onDelete: "set null",
+  }),
+  stockNo: varchar("stock_no", { length: 255 }),
+  unit: varchar("unit", { length: 50 }),
+  name: varchar("name", { length: 255 }),
+  description: text("description"),
+  quantity: integer("quantity").notNull(),
+  remarks: text("remarks"),
+});

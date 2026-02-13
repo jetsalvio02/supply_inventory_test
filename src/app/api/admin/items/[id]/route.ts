@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   _req: Request,
-  context: { params: Promise<{ id: string }> },
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await context.params;
@@ -28,14 +28,14 @@ export async function GET(
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to fetch item" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
 
 export async function PUT(
   req: Request,
-  context: { params: Promise<{ id: string }> },
+  context: { params: Promise<{ id: string }> }
 ) {
   const body = await req.json();
 
@@ -53,6 +53,7 @@ export async function PUT(
       stockNo: body.stockNo,
       unitId: body.unitId,
       unitCost: body.unitCost,
+      totalCost: body.totalCost,
     })
     .where(eq(items.id, itemId))
     .returning();
@@ -62,7 +63,7 @@ export async function PUT(
 
 export async function DELETE(
   _req: Request,
-  context: { params: Promise<{ id: string }> },
+  context: { params: Promise<{ id: string }> }
 ) {
   const { id } = await context.params;
   const itemId = Number(id);
@@ -70,9 +71,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Item not found" }, { status: 404 });
   }
 
-  await database
-    .delete(items)
-    .where(eq(items.id, itemId));
+  await database.delete(items).where(eq(items.id, itemId));
 
   return NextResponse.json({ success: true });
 }

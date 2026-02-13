@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -33,6 +33,12 @@ import {
   TrashIcon,
 } from "lucide-react";
 import Swal from "sweetalert2";
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 
 interface ItemOption {
   id: number;
@@ -44,6 +50,7 @@ interface ItemOption {
 
 interface RisRow {
   id: number;
+  itemId: number | null;
   stockNo: string;
   unit: string;
   name: string;
@@ -59,30 +66,104 @@ interface RequestRecord {
   items: RisRow[];
 }
 
-export default function UserHomePage() {
+const queryClient = new QueryClient();
+
+function UserHomePageInner() {
   const [open, setOpen] = useState(false);
-  const [items, setItems] = useState<ItemOption[]>([]);
   const [comboOpen, setComboOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ItemOption | null>(null);
   const [rows, setRows] = useState<RisRow[]>([]);
   const [purpose, setPurpose] = useState("");
-  const [requests, setRequests] = useState<RequestRecord[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+  const queryClient = useQueryClient();
+
+  const { data: items = [] } = useQuery<ItemOption[]>({
+    queryKey: ["admin-items"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/items");
+      if (!res.ok) {
+        throw new Error("Failed to load items");
+      }
+      const data = await res.json();
+      return data.map((i: any) => ({
+        id: i.id,
+        name: i.name,
+        description: i.description ?? "",
+        stockNo: i.stockNo ?? "",
+        unit: i.unit ?? "",
+      }));
+    },
+  });
+
+  const { data: requests = [] } = useQuery<RequestRecord[]>({
+    queryKey: ["user-requests"],
+    queryFn: async () => {
+      const res = await fetch("/api/user/requests");
+      if (!res.ok) {
+        throw new Error("Failed to load requests");
+      }
+      const data = await res.json();
+      if (!data?.success || !Array.isArray(data.requests)) {
+        return [];
+      }
+      return data.requests.map((req: any) => ({
+        id: req.id,
+        createdAt: req.createdAt,
+        purpose: req.purpose ?? "",
+        items: (req.items ?? []).map((item: any) => ({
+          id: item.id,
+          stockNo: item.stockNo ?? "",
+          unit: item.unit ?? "",
+          name: item.name ?? "",
+          description: item.description ?? "",
+          quantity: item.quantity ?? 0,
+          remarks: item.remarks ?? "",
+        })),
+      }));
+    },
+  });
+
+  const totalPages = useMemo(() => {
+    if (!requests.length) return 1;
+    return Math.ceil(requests.length / pageSize);
+  }, [requests.length, pageSize]);
 
   useEffect(() => {
-    fetch("/api/admin/items")
-      .then((r) => r.json())
-      .then((data: any[]) => {
-        setItems(
-          data.map((i) => ({
-            id: i.id,
-            name: i.name,
-            description: i.description ?? "",
-            stockNo: i.stockNo ?? "",
-            unit: i.unit ?? "",
-          }))
-        );
-      })
-      .catch(() => {});
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+
+  const paginatedRequests = useMemo(
+    () => requests.slice(startIndex, endIndex),
+    [requests, startIndex, endIndex]
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const source = new EventSource("/api/events");
+
+    source.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data?.type === "requests-updated") {
+          queryClient.invalidateQueries({ queryKey: ["user-requests"] });
+        }
+      } catch {}
+    };
+
+    source.onerror = () => {
+      source.close();
+    };
+
+    return () => {
+      source.close();
+    };
   }, []);
 
   const addRowFromItem = (item: ItemOption) => {
@@ -99,6 +180,7 @@ export default function UserHomePage() {
         ...prev,
         {
           id: Date.now(),
+          itemId: item.id,
           stockNo: item.stockNo ?? "",
           unit: item.unit ?? "",
           name: item.name ?? "",
@@ -126,7 +208,7 @@ export default function UserHomePage() {
     setSelectedItem(null);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (rows.length === 0) {
       Swal.fire({
         icon: "warning",
@@ -154,22 +236,116 @@ export default function UserHomePage() {
       });
       return;
     }
-    const now = new Date();
-    const record: RequestRecord = {
-      id: now.getTime(),
-      createdAt: now.toISOString(),
-      purpose,
-      items: rows,
-    };
-    setRequests((prev) => [record, ...prev]);
-    setRows([]);
-    setPurpose("");
-    setSelectedItem(null);
-    setOpen(false);
+    try {
+      const res = await fetch("/api/user/requests", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          purpose,
+          items: rows.map((row) => ({
+            itemId: row.itemId,
+            stockNo: row.stockNo,
+            unit: row.unit,
+            name: row.name,
+            description: row.description,
+            quantity: row.quantity,
+            remarks: row.remarks,
+          })),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: data.message ?? "Failed to save request.",
+        });
+        return;
+      }
+
+      const saved: RequestRecord = {
+        id: data.request.id,
+        createdAt:
+          typeof data.request.createdAt === "string"
+            ? data.request.createdAt
+            : new Date(data.request.createdAt).toISOString(),
+        purpose: data.request.purpose ?? "",
+        items: (data.request.items ?? []).map((item: any) => ({
+          id: item.id,
+          stockNo: item.stockNo ?? "",
+          unit: item.unit ?? "",
+          name: item.name ?? "",
+          description: item.description ?? "",
+          quantity: item.quantity ?? 0,
+          remarks: item.remarks ?? "",
+        })),
+      };
+
+      queryClient.setQueryData<RequestRecord[] | undefined>(
+        ["user-requests"],
+        (prev) => {
+          const existing = prev ?? [];
+          return [saved, ...existing];
+        }
+      );
+      setRows([]);
+      setPurpose("");
+      setSelectedItem(null);
+      setOpen(false);
+    } catch {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Network error while saving request.",
+      });
+    }
   };
 
-  const handleDelete = (recordId: number) => {
-    setRequests((prev) => prev.filter((r) => r.id !== recordId));
+  const handleDelete = async (recordId: number) => {
+    try {
+      const result = await Swal.fire({
+        icon: "warning",
+        title: "Confirm Delete",
+        text: "Are you sure you want to delete this request?",
+        showCancelButton: true,
+        confirmButtonText: "Delete",
+        cancelButtonText: "Cancel",
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+      });
+
+      if (!result.isConfirmed) return;
+
+      const res = await fetch(`/api/user/requests/${recordId}`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: data.message ?? "Failed to delete request.",
+        });
+        return;
+      }
+
+      queryClient.setQueryData<RequestRecord[] | undefined>(
+        ["user-requests"],
+        (prev) => (prev ?? []).filter((r) => r.id !== recordId)
+      );
+    } catch {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Network error while deleting request.",
+      });
+    }
   };
 
   const handlePrint = (record: RequestRecord) => {
@@ -421,10 +597,10 @@ export default function UserHomePage() {
               </tr>
               <tr>
                 <td class="sign-cell sign-label-col">Date :</td>
+                <td class="sign-cell">${new Date().toLocaleDateString()}</td>
+                <td class="sign-cell">${new Date().toLocaleDateString()}</td>
                 <td class="sign-cell"></td>
-                <td class="sign-cell"></td>
-                <td class="sign-cell"></td>
-                <td class="sign-cell"></td>
+                <td class="sign-cell">${new Date().toLocaleDateString()}</td>
               </tr>
             </table>
           </div>
@@ -445,7 +621,7 @@ export default function UserHomePage() {
 
   return (
     <div className="space-y-8">
-      <section className="flex justify-between items-center">
+      <section className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">Welcome to the User Portal</h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -453,14 +629,14 @@ export default function UserHomePage() {
             you.
           </p>
         </div>
-        <div>
+        <div className="flex sm:justify-end">
           <Button variant="success" onClick={() => setOpen(true)}>
             Request <GitPullRequest />
           </Button>
         </div>
       </section>
       <section className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-lg font-semibold">Request list</h2>
           {requests.length > 0 && (
             <span className="text-xs text-muted-foreground">
@@ -473,34 +649,36 @@ export default function UserHomePage() {
             No requests yet. Submit a requisition to see it here.
           </p>
         ) : (
-          <div className="rounded-lg border bg-card shadow-sm">
+          <div className="rounded-lg border border-border/60 dark:border-white/5 bg-card/80 dark:bg-white/[0.03] shadow-sm">
             <div className="overflow-x-auto">
-              <table className="w-full text-xs md:text-sm">
+              <table className="w-full text-xs md:text-sm text-foreground/90">
                 <thead>
-                  <tr className="bg-muted/70 text-left">
-                    <th className="px-3 py-2 text-[11px] font-semibold text-muted-foreground">
+                  <tr className="bg-muted/70 dark:bg-white/[0.04] text-left border-b border-border/60 dark:border-white/10">
+                    <th className="px-3 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
                       Ref #
                     </th>
-                    <th className="px-3 py-2 text-[11px] font-semibold text-muted-foreground">
+                    <th className="px-3 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
                       Date
                     </th>
-                    <th className="px-3 py-2 text-[11px] font-semibold text-muted-foreground">
+                    <th className="px-3 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
                       Items / Quantity
                     </th>
-                    <th className="px-3 py-2 text-[11px] font-semibold text-muted-foreground hidden md:table-cell">
+                    <th className="px-3 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide hidden md:table-cell">
                       Purpose
                     </th>
-                    <th className="px-3 py-2 text-[11px] font-semibold text-muted-foreground text-right">
+                    <th className="px-3 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide text-right">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody>
-                  {requests.map((req, index) => (
+                <tbody className="divide-y divide-border/60 dark:divide-white/5">
+                  {paginatedRequests.map((req, index) => (
                     <tr
                       key={req.id}
                       className={
-                        index % 2 === 0 ? "bg-background" : "bg-muted/30"
+                        index % 2 === 0
+                          ? "bg-background/40 dark:bg-transparent"
+                          : "bg-muted/30 dark:bg-white/[0.03]"
                       }
                     >
                       <td className="px-3 py-2 align-top whitespace-nowrap text-[11px] md:text-xs">
@@ -516,9 +694,9 @@ export default function UserHomePage() {
                               key={item.id}
                               className="flex items-center justify-between gap-2 text-[11px] md:text-xs"
                             >
-                              <span className="truncate">
+                              <span className="">
                                 {`${item.name} (${item.description})`}
-                                <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px]">
+                                <span className="inline-flex h-5 w-5 items-center justify-center rounded bg-primary/10 text-primary ring-1 ring-primary/20 text-[10px] ml-1">
                                   {item.quantity}
                                 </span>
                               </span>
@@ -554,6 +732,43 @@ export default function UserHomePage() {
                 </tbody>
               </table>
             </div>
+            {requests.length > 0 && (
+              <div className="flex flex-col md:flex-row items-center justify-between gap-2 px-4 py-3 border-t text-xs md:text-sm">
+                <div>
+                  Showing{" "}
+                  {`${Math.min(startIndex + 1, requests.length)}-${Math.min(
+                    endIndex,
+                    requests.length
+                  )}`}{" "}
+                  of {requests.length} requests
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage <= 1}
+                    onClick={() =>
+                      setCurrentPage((page) => Math.max(1, page - 1))
+                    }
+                  >
+                    Previous
+                  </Button>
+                  <span>
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage >= totalPages}
+                    onClick={() =>
+                      setCurrentPage((page) => Math.min(totalPages, page + 1))
+                    }
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </section>
@@ -669,25 +884,29 @@ export default function UserHomePage() {
                       onChange={(e) =>
                         updateRow(row.id, "stockNo", e.target.value)
                       }
+                      disabled
                     />
                   </td>
                   <td className="border border-border px-1 py-1">
-                    <Input
+                    {/* <Input
                       className="h-7 rounded-none"
                       value={row.unit}
                       onChange={(e) =>
                         updateRow(row.id, "unit", e.target.value)
                       }
-                    />
+                    /> */}
+                    {row.unit}
                   </td>
                   <td className="border border-border px-1 py-1">
-                    <Input
+                    {`${row.name} (${row.description})`}
+                    {/* <Input
                       className="h-7 rounded-none"
+                      disabled
                       value={`${row.name} (${row.description})`}
                       onChange={(e) =>
                         updateRow(row.id, "description", e.target.value)
                       }
-                    />
+                    /> */}
                   </td>
                   <td className="border border-border px-1 py-1">
                     <Input
@@ -732,5 +951,13 @@ export default function UserHomePage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+export default function UserHomePage() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <UserHomePageInner />
+    </QueryClientProvider>
   );
 }

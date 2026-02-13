@@ -50,6 +50,20 @@
       "when": 1770711068159,
       "tag": "0006_parched_mentor",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1770789756843,
+      "tag": "0007_uneven_lord_hawal",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1770824752165,
+      "tag": "0008_past_plazm",
+      "breakpoints": true
     }
   ]
 }

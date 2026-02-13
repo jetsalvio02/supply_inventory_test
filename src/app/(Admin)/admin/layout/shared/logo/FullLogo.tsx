@@ -5,10 +5,11 @@ import Link from "next/link";
 
 const FullLogo = () => {
   return (
-    <Link href={"/"}>
+    // <Link href={"/"}>
+    <>
       {/* Dark Logo */}
       <Image
-        src="/images/logos/dark-logo.svg"
+        src="/images/logos/light_logo.png"
         alt="logo"
         width={135}
         height={40}
@@ -16,13 +17,15 @@ const FullLogo = () => {
       />
       {/* Light Logo */}
       <Image
-        src="/images/logos/dark-logo.svg"
+        src="/images/logos/dark_logo.png"
         alt="logo"
         width={135}
         height={40}
         className="hidden dark:block rtl:scale-x-[-1]"
       />
-    </Link>
+    </>
+
+    // </Link>
   );
 };
 
