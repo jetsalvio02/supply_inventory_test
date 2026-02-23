@@ -1,13 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useTheme } from "next-themes";
 import { usePathname } from "next/navigation";
 import SidebarContent from "./Sidebaritems";
 import { Icon } from "@iconify/react";
 import FullLogo from "../shared/logo/FullLogo";
-import { Button } from "@/components/ui/button";
 import {
   AMLogo,
   AMMenu,
@@ -82,7 +80,7 @@ const renderSidebarItems = (
           isSelected={isSelected}
           link={item.url || undefined}
           target={linkTarget}
-          //   badge={!!item.isPro}
+          badge={!!item.isPro}
           badgeColor="bg-lightsecondary"
           badgeTextColor="text-secondary"
           disabled={item.disabled}
@@ -112,7 +110,7 @@ const SidebarLayout = ({ onClose }: { onClose?: () => void }) => {
       width={"270px"}
       showTrigger={false}
       mode={sidebarMode}
-      className="fixed left-0 top-0 border-none bg-background z-10 h-screen"
+      className="border-none bg-background z-10 h-screen max-h-screen flex flex-col overflow-y-auto xl:fixed xl:left-0 xl:top-0"
     >
       {/* Logo */}
       <div className="px-4 flex justify-center items-center brand-logo overflow-hidden">
@@ -129,9 +127,8 @@ const SidebarLayout = ({ onClose }: { onClose?: () => void }) => {
       </div>
 
       {/* Sidebar items */}
-
-      <div className="h-n80 overflow-y-auto">
-        <div className="px-6">
+      <div className="flex-1 min-h-0">
+        <div className="px-6 pb-4 pt-2">
           {SidebarContent.map((section, index) => (
             <div key={index}>
               {renderSidebarItems(

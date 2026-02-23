@@ -69,10 +69,7 @@ const BlogCard = ({ post }: Btype) => {
           </Badge>
 
           <h5 className="text-xl py-6 group-hover:text-primary">
-            <Link
-              href={`/apps/blog/detail/${linkTo}`}
-              className="line-clamp-2"
-            >
+            <Link href={`/apps/blog/detail/${linkTo}`} className="line-clamp-2">
               {title}
             </Link>
           </h5>
@@ -82,11 +79,7 @@ const BlogCard = ({ post }: Btype) => {
               <Icon icon="tabler:eye" height="18" className="text-ld" /> {view}
             </div>
             <div className="flex gap-2 items-center text-darklink text-[15px]">
-              <Icon
-                icon="tabler:message-2"
-                height="18"
-                className="text-ld"
-              />{" "}
+              <Icon icon="tabler:message-2" height="18" className="text-ld" />{" "}
               {comments?.length}
             </div>
             <div className="ms-auto flex gap-2 items-center text-darklink text-[15px]">

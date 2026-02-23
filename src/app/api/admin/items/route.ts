@@ -14,6 +14,8 @@ export async function GET() {
       newDeliveryStock: items.newDeliveryStock,
       stockNo: items.stockNo,
       unit: units.name,
+      unitCost: items.unitCost,
+      totalCost: items.totalCost,
       totalOut: inventorySummary.totalOut,
       actualBalance: inventorySummary.actualBalance,
     })

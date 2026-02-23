@@ -8,7 +8,10 @@ import crypto from "crypto";
 const authCookieSecret = process.env.AUTH_COOKIE_SECRET || "dev-secret";
 
 function signAuthValue(value: string) {
-  return crypto.createHmac("sha256", authCookieSecret).update(value).digest("hex");
+  return crypto
+    .createHmac("sha256", authCookieSecret)
+    .update(value)
+    .digest("hex");
 }
 
 export async function POST(req: Request) {
@@ -18,18 +21,15 @@ export async function POST(req: Request) {
     const rawId = body.id ?? body.accountNo;
     const password = String(body.password ?? "").trim();
 
-    const numericId = Number(rawId);
-    if (!rawId || Number.isNaN(numericId) || !password) {
+    const id = String(rawId ?? "").trim();
+    if (!id || !/^\d+$/.test(id) || !password) {
       return NextResponse.json(
         { success: false, message: "Invalid credentials" },
         { status: 400 }
       );
     }
 
-    const result = await database
-      .select()
-      .from(users)
-      .where(eq(users.id, numericId));
+    const result = await database.select().from(users).where(eq(users.id, id));
 
     if (!result || result.length === 0) {
       return NextResponse.json(

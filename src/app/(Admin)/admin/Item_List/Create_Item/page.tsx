@@ -168,6 +168,7 @@ export default function CreateItemPage() {
                   New delivery stock
                 </label>
                 <Input
+                  type="number"
                   placeholder="Matches beginning stock"
                   value={form.new_delivery}
                   onChange={(e) =>

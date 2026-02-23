@@ -64,6 +64,62 @@
       "when": 1770824752165,
       "tag": "0008_past_plazm",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1770954743364,
+      "tag": "0009_whole_giant_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1771077322027,
+      "tag": "0010_naive_doctor_doom",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1771079834187,
+      "tag": "0011_careful_wallop",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1771206892175,
+      "tag": "0012_slow_human_robot",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1771230089390,
+      "tag": "0013_tough_jackpot",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1771300106019,
+      "tag": "0014_brainy_pride",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1771300468788,
+      "tag": "0015_broad_agent_zero",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1771467416976,
+      "tag": "0016_big_tomorrow_man",
+      "breakpoints": true
     }
   ]
 }

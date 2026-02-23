@@ -27,7 +27,7 @@ const Error = async () => {
       .update(baseValue)
       .digest("hex");
 
-    if (sig === expected && Number.isFinite(Number(userIdRaw))) {
+    if (sig === expected) {
       role = roleRaw;
     }
   }

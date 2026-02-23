@@ -1,8 +1,13 @@
-'use  client'
+"use  client";
 import { useState } from "react";
 import { Icon } from "@iconify/react";
 import { BlogType } from "@/app/(Admin)/admin/types/blog";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -14,10 +19,11 @@ const BlogComment = ({ comment }: BlogType | any) => {
       <div className="mt-5 p-5 bg-lightgray dark:bg-darkmuted rounded-md">
         <div className="flex gap-3 items-center">
           <Avatar>
-            <AvatarImage src={comment?.profile.avatar} alt={comment?.profile.name} />
-            <AvatarFallback>
-              {comment?.profile.name}
-            </AvatarFallback>
+            <AvatarImage
+              src={comment?.profile.avatar}
+              alt={comment?.profile.name}
+            />
+            <AvatarFallback>{comment?.profile.name}</AvatarFallback>
           </Avatar>
           <h6 className="text-base">{comment?.profile.name}</h6>
           <span className="h-2 w-2 rounded-full bg-dark opacity-40 dark:bg-white block"></span>
@@ -34,12 +40,14 @@ const BlogComment = ({ comment }: BlogType | any) => {
                   className="flex items-center"
                   onClick={() => setShowReply(!showReply)}
                 >
-                  <Icon icon="tabler:arrow-back-up" height="18" className="!text-white !shrink-0" />
+                  <Icon
+                    icon="tabler:arrow-back-up"
+                    height="18"
+                    className="!text-white !shrink-0"
+                  />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>
-                Reply
-              </TooltipContent>
+              <TooltipContent>Reply</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
@@ -52,10 +60,11 @@ const BlogComment = ({ comment }: BlogType | any) => {
                 <div className="mt-5 p-5 bg-lightgray dark:bg-darkmuted rounded-md">
                   <div className="flex gap-3 items-center">
                     <Avatar>
-                      <AvatarImage src={reply.profile.avatar} alt={reply.profile.name} />
-                      <AvatarFallback>
-                        {reply.profile.name}
-                      </AvatarFallback>
+                      <AvatarImage
+                        src={reply.profile.avatar}
+                        alt={reply.profile.name}
+                      />
+                      <AvatarFallback>{reply.profile.name}</AvatarFallback>
                     </Avatar>
                     <h6 className="text-base">{reply.profile.name}</h6>
                     <span className="h-2 w-2 rounded-full bg-dark dark:bg-white opacity-40 block"></span>
@@ -75,13 +84,17 @@ const BlogComment = ({ comment }: BlogType | any) => {
           <div className="flex gap-3 items-center">
             <div className="w-10">
               <Avatar>
-                <AvatarImage src={comment?.profile.avatar} alt={comment?.profile.name} />
-                <AvatarFallback>
-                  {comment?.profile.name}
-                </AvatarFallback>
+                <AvatarImage
+                  src={comment?.profile.avatar}
+                  alt={comment?.profile.name}
+                />
+                <AvatarFallback>{comment?.profile.name}</AvatarFallback>
               </Avatar>
             </div>
-            <Input className="form-control md:w-full w-fit" placeholder="Reply" />
+            <Input
+              className="form-control md:w-full w-fit"
+              placeholder="Reply"
+            />
             <Button>Reply</Button>
           </div>
         </div>

@@ -1,8 +1,5 @@
 import { NextRequest } from "next/server";
-import {
-  addRealtimeClient,
-  removeRealtimeClient,
-} from "@/lib/realtime";
+import { addRealtimeClient, removeRealtimeClient } from "@/lib/realtime";
 
 export async function GET(request: NextRequest) {
   const stream = new TransformStream();
@@ -26,4 +23,3 @@ export async function GET(request: NextRequest) {
     },
   });
 }
-

@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ArrowDown, ArrowUp, RotateCcw } from "lucide-react";
+import Image from "next/image";
 
 interface StockCardRow {
   id: number;
@@ -17,10 +15,27 @@ interface StockCardRow {
   performedBy: string;
 }
 
+interface SystemSettings {
+  entityName: string | null;
+  division: string | null;
+  referenceIarNo: string | null;
+  fundCluster: string | null;
+}
+
+interface ItemInfo {
+  id: number;
+  name: string;
+  description: string | null;
+  stockNo: string | null;
+  unit: string | null;
+}
+
 export default function StockCardPage() {
   const params = useParams<{ id: string }>();
   const id = params.id;
   const [rows, setRows] = useState<StockCardRow[]>([]);
+  const [settings, setSettings] = useState<SystemSettings | null>(null);
+  const [item, setItem] = useState<ItemInfo | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -31,73 +46,189 @@ export default function StockCardPage() {
       .catch(() => {});
   }, [id]);
 
+  useEffect(() => {
+    fetch("/api/admin/settings")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.settings) {
+          setSettings(data.settings);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!id) return;
+
+    fetch("/api/admin/items")
+      .then((r) => r.json())
+      .then((list: any[]) => {
+        const itemId = Number(id);
+        const found = list.find((x) => x.id === itemId);
+        if (found) {
+          setItem({
+            id: found.id,
+            name: found.name ?? "",
+            description: found.description ?? "",
+            stockNo: found.stockNo ?? "",
+            unit: found.unit ?? "",
+          });
+        }
+      })
+      .catch(() => {});
+  }, [id]);
+
+  const entityName = settings?.entityName ?? "";
+  const division = settings?.division ?? "";
+  const fundCluster = settings?.fundCluster ?? "";
+  const refIarNo = settings?.referenceIarNo ?? "";
+
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Stock Card</h1>
-        <p className="text-sm text-muted-foreground">
-          Complete inventory ledger (audit trail)
-        </p>
-      </div>
+    <div className="min-h-screen bg-slate-100 p-4 flex justify-center">
+      <div className="bg-white w-[900px] max-w-full border border-slate-400 p-6 text-[11px] text-slate-900">
+        <div className="flex justify-end text-[10px] mb-1">
+          <span>Appendix 58</span>
+        </div>
 
-      <Card className="rounded-2xl">
-        <CardContent className="p-0 overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-muted">
-              <tr>
-                <th className="p-4 text-left">Date</th>
-                <th className="p-4 text-left">Transaction</th>
-                <th className="p-4">IN</th>
-                <th className="p-4">OUT</th>
-                <th className="p-4">Balance</th>
-                <th className="p-4 text-left">Remarks</th>
-                <th className="p-4 text-left">By</th>
-              </tr>
-            </thead>
+        <div className="text-center mb-4">
+          <div className="flex justify-center mb-2">
+            <Image
+              src="/images/logos/logo.png"
+              alt="Department of Education logo"
+              width={64}
+              height={64}
+            />
+          </div>
+          <div className="text-[11px] uppercase tracking-wide">
+            Department of Education
+          </div>
+          {division && (
+            <div className="text-[11px] uppercase tracking-wide">
+              {division}
+            </div>
+          )}
+          <div className="mt-2 font-semibold text-sm tracking-wide">
+            STOCK CARD
+          </div>
+        </div>
 
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.id} className="border-b hover:bg-muted/50">
-                  <td className="p-4">
+        <div className="grid grid-cols-2 gap-y-1 gap-x-6 mb-4">
+          <div className="flex items-center gap-2">
+            <span className="w-28">Entity Name:</span>
+            <span className="flex-1 border-b border-slate-500 leading-none">
+              {entityName || "\u00A0"}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-28">Fund Cluster:</span>
+            <span className="flex-1 border-b border-slate-500 leading-none">
+              {fundCluster || "\u00A0"}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-28">Item:</span>
+            <span className="flex-1 border-b border-slate-500 leading-none">
+              {item ? item.name : "\u00A0"}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-28">Stock No.:</span>
+            <span className="flex-1 border-b border-slate-500 leading-none">
+              {item?.stockNo || "\u00A0"}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-28">Description:</span>
+            <span className="flex-1 border-b border-slate-500 leading-none">
+              {item?.description || "\u00A0"}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-28">Reference IAR No.:</span>
+            <span className="flex-1 border-b border-slate-500 leading-none">
+              {refIarNo || "\u00A0"}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 col-span-2">
+            <span className="w-28">Unit of measurement:</span>
+            <span className="flex-1 border-b border-slate-500 leading-none">
+              {item?.unit || "\u00A0"}
+            </span>
+          </div>
+        </div>
+
+        <table className="w-full border border-slate-500 border-collapse text-[10px]">
+          <thead>
+            <tr>
+              <th className="border border-slate-500 px-1 py-1" rowSpan={2}>
+                Date
+              </th>
+              <th className="border border-slate-500 px-1 py-1" rowSpan={2}>
+                Reference IAR No.
+              </th>
+              <th className="border border-slate-500 px-1 py-1" colSpan={1}>
+                Receipt
+              </th>
+              <th className="border border-slate-500 px-1 py-1" colSpan={2}>
+                Issue
+              </th>
+              <th className="border border-slate-500 px-1 py-1" colSpan={1}>
+                Balance
+              </th>
+              <th className="border border-slate-500 px-1 py-1" rowSpan={2}>
+                No. of days to consume
+              </th>
+            </tr>
+            <tr>
+              <th className="border border-slate-500 px-1 py-1">Qty.</th>
+              <th className="border border-slate-500 px-1 py-1">Qty.</th>
+              <th className="border border-slate-500 px-1 py-1">Office</th>
+              <th className="border border-slate-500 px-1 py-1">Qty.</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => {
+              const isIn = r.type === "IN" || r.type === "FORWARD";
+              const isOut = r.type === "OUT";
+              return (
+                <tr key={r.id}>
+                  <td className="border border-slate-500 px-1 py-1 text-center">
                     {new Date(r.date).toLocaleDateString()}
                   </td>
-
-                  <td className="p-4">
-                    <Badge
-                      variant={
-                        r.type === "IN"
-                          ? "default"
-                          : r.type === "OUT"
-                            ? "destructive"
-                            : "secondary"
-                      }
-                      className="flex w-fit gap-1"
-                    >
-                      {r.type === "IN" && <ArrowDown size={12} />}
-                      {r.type === "OUT" && <ArrowUp size={12} />}
-                      {r.type === "FORWARD" && <RotateCcw size={12} />}
-                      {r.type}
-                    </Badge>
+                  <td className="border border-slate-500 px-1 py-1 text-center">
+                    {refIarNo}
                   </td>
-
-                  <td className="p-4 text-center text-green-700">
-                    {r.inQty || "-"}
+                  <td className="border border-slate-500 px-1 py-1 text-center">
+                    {isIn ? r.inQty || "" : ""}
                   </td>
-
-                  <td className="p-4 text-center text-red-700">
-                    {r.outQty || "-"}
+                  <td className="border border-slate-500 px-1 py-1 text-center">
+                    {isOut ? r.outQty || "" : ""}
                   </td>
-
-                  <td className="p-4 text-center font-semibold">{r.balance}</td>
-
-                  <td className="p-4">{r.remarks ?? "-"}</td>
-                  <td className="p-4">{r.performedBy}</td>
+                  <td className="border border-slate-500 px-1 py-1 text-center">
+                    {isOut ? "" : ""}
+                  </td>
+                  <td className="border border-slate-500 px-1 py-1 text-center">
+                    {r.balance}
+                  </td>
+                  <td className="border border-slate-500 px-1 py-1 text-center">
+                    {""}
+                  </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
+              );
+            })}
+            {!rows.length && (
+              <tr>
+                <td
+                  className="border border-slate-500 px-1 py-6 text-center text-slate-500"
+                  colSpan={7}
+                >
+                  No stock card entries for this item.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

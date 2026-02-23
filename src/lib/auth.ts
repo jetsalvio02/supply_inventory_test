@@ -23,11 +23,5 @@ export async function readAuthenticatedUserIdFromCookies() {
     return null;
   }
 
-  const userId = Number(userIdRaw);
-  if (!Number.isFinite(userId)) {
-    return null;
-  }
-
-  return userId;
+  return userIdRaw;
 }
-

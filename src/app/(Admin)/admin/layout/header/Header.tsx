@@ -83,7 +83,7 @@ const Header = () => {
             <Icon icon="tabler:menu-2" height={20} width={20} />
           </div>
 
-          <div className="block xl:hidden">
+          <div className="block xl:hidden flex justify-center items-center">
             <FullLogo />
           </div>
 
@@ -113,9 +113,9 @@ const Header = () => {
             </div>
 
             <Button
-              className="ml-2 text-white"
+              className="ml-2 text-white bg-red-600 hover:bg-red-700"
               size="icon"
-              variant="destructive"
+              // variant="destructive"
               onClick={handleLogout}
             >
               <LogOutIcon className="w-4 h-4" />
@@ -181,8 +181,8 @@ const Header = () => {
 
                 {/* Logout */}
                 <Button
-                  className="text-white"
-                  variant="destructive"
+                  className="text-white bg-red-600 hover:bg-red-700"
+                  // variant="destructive"
                   onClick={handleLogout}
                 >
                   <LogOutIcon />
@@ -195,7 +195,10 @@ const Header = () => {
 
       {/* Mobile Sidebar */}
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetContent side="left" className="w-64 p-0">
+        <SheetContent
+          side="left"
+          className="w-64 p-0 h-screen max-h-screen overflow-y-auto"
+        >
           <VisuallyHidden>
             <SheetTitle>sidebar</SheetTitle>
           </VisuallyHidden>

@@ -47,7 +47,8 @@ const CreateTicketForm = () => {
       if (data?.data) {
         setTickets(data.data);
         const maxId = data.data.reduce(
-          (max: number, ticket: TicketType) => (ticket.Id > max ? ticket.Id : max),
+          (max: number, ticket: TicketType) =>
+            ticket.Id > max ? ticket.Id : max,
           0
         );
         setTicketId(maxId + 1);
@@ -143,7 +144,8 @@ const CreateTicketForm = () => {
         <div className="flex flex-wrap items-center justify-between mt-6 gap-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="default">{selectedAgent.name}
+              <Button variant="default">
+                {selectedAgent.name}
                 <ChevronDown className="h-4 w-4 ml-1" />
               </Button>
             </DropdownMenuTrigger>
@@ -158,7 +160,12 @@ const CreateTicketForm = () => {
                 >
                   <div className="flex items-center gap-2">
                     <Avatar className="h-6 w-6">
-                      <AvatarImage src={agent.photo} alt={agent.name} width={40} height={40}/>
+                      <AvatarImage
+                        src={agent.photo}
+                        alt={agent.name}
+                        width={40}
+                        height={40}
+                      />
                       <AvatarFallback>{agent.name[0]}</AvatarFallback>
                     </Avatar>
                     <span>{agent.name}</span>
@@ -169,9 +176,7 @@ const CreateTicketForm = () => {
           </DropdownMenu>
 
           <div className="flex gap-3">
-            <Button onClick={handleSubmit}>
-              Save
-            </Button>
+            <Button onClick={handleSubmit}>Save</Button>
             <Button
               variant="error"
               onClick={() => router.push("/apps/tickets")}

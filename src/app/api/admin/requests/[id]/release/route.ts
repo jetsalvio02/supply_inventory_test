@@ -14,7 +14,7 @@ import { readAuthenticatedUserIdFromCookies } from "@/lib/auth";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const userId = await readAuthenticatedUserIdFromCookies();
@@ -22,7 +22,7 @@ export async function POST(
     if (!userId) {
       return NextResponse.json(
         { success: false, message: "Not authenticated" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -33,12 +33,15 @@ export async function POST(
     if (!idParam || !Number.isFinite(requestId)) {
       return NextResponse.json(
         { success: false, message: "Invalid request id" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const [request] = await database
-      .select({ id: risRequests.id })
+      .select({
+        id: risRequests.id,
+        requestUserId: risRequests.userId,
+      })
       .from(risRequests)
       .where(eq(risRequests.id, requestId))
       .limit(1);
@@ -46,7 +49,21 @@ export async function POST(
     if (!request) {
       return NextResponse.json(
         { success: false, message: "Request not found" },
-        { status: 404 }
+        { status: 404 },
+      );
+    }
+
+    // Check if already released
+    const [existingTx] = await database
+      .select({ id: inventoryTransactions.id })
+      .from(inventoryTransactions)
+      .where(eq(inventoryTransactions.remarks, `RIS #${requestId}`))
+      .limit(1);
+
+    if (existingTx) {
+      return NextResponse.json(
+        { success: false, message: "This request has already been released." },
+        { status: 400 },
       );
     }
 
@@ -65,7 +82,7 @@ export async function POST(
     if (!requestItems.length) {
       return NextResponse.json(
         { success: false, message: "No items to release for this request" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -113,7 +130,7 @@ export async function POST(
         .insert(inventoryTransactions)
         .values({
           itemId,
-          userId,
+          userId: request.requestUserId ?? userId,
           type: "OUT",
           quantity,
           remarks: `RIS #${requestId}`,
@@ -147,7 +164,7 @@ export async function POST(
           message:
             "No inventory was updated for this request. Make sure the request items are linked to inventory items.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -160,7 +177,7 @@ export async function POST(
         success: false,
         message: error?.message ?? "Failed to release items for request",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -8,7 +8,10 @@ import { uniqueId } from "lodash";
 import CardBox from "@/app/components/shared/CardBox";
 import Image from "next/image";
 import BlogComment from "./BlogCommnets";
-import { BlogContext, BlogContextProps } from "../../../../context/BlogContext/index";
+import {
+  BlogContext,
+  BlogContextProps,
+} from "../../../../context/BlogContext/index";
 import { BlogType } from "@/app/(Admin)/admin/types/blog";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -78,7 +81,9 @@ const BlogDetailData = ({ slug }: BlogDetailDataProps) => {
                   className="w-full object-cover object-center"
                 />
               </div>
-              <Badge variant={"gray"} className="absolute bottom-8 end-6">2 min Read</Badge>
+              <Badge variant={"gray"} className="absolute bottom-8 end-6">
+                2 min Read
+              </Badge>
             </div>
             <div className="flex justify-between items-center -mt-11 px-6 w-fit">
               <div>
@@ -86,7 +91,10 @@ const BlogDetailData = ({ slug }: BlogDetailDataProps) => {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Avatar className="h-10 w-10">
-                        <AvatarImage src={post?.author.avatar} alt={post?.author.name} />
+                        <AvatarImage
+                          src={post?.author.avatar}
+                          alt={post?.author.name}
+                        />
                         <AvatarFallback>
                           {post?.author?.name?.[0] || "?"}
                         </AvatarFallback>
@@ -131,7 +139,9 @@ const BlogDetailData = ({ slug }: BlogDetailDataProps) => {
             <Separator className="my-0 mb-4 bg-gray-200 dark:bg-gray-700" />
 
             <div className="px-6 pb-6">
-              <h2 className="md:text-3xl text-2xl pb-5">Title of the paragraph</h2>
+              <h2 className="md:text-3xl text-2xl pb-5">
+                Title of the paragraph
+              </h2>
               <p className="text-darklink">
                 But you cannot figure out what it is or what it can do...
               </p>
@@ -145,7 +155,7 @@ const BlogDetailData = ({ slug }: BlogDetailDataProps) => {
               </p>
               <i>This is italic text.</i>
 
-              <Separator className="my-8 h-px border-0 bg-gray-200 dark:bg-gray-700"/>
+              <Separator className="my-8 h-px border-0 bg-gray-200 dark:bg-gray-700" />
 
               <h3 className="text-xl mb-3">Unorder list</h3>
               <ul className="list-disc pl-6">
@@ -154,7 +164,7 @@ const BlogDetailData = ({ slug }: BlogDetailDataProps) => {
                 <li>It allows you to start your bid</li>
               </ul>
 
-              <Separator className="my-8 h-px border-0 bg-gray-200 dark:bg-gray-700"/>
+              <Separator className="my-8 h-px border-0 bg-gray-200 dark:bg-gray-700" />
 
               <h3 className="text-xl mb-3">Order list</h3>
               <ol className="list-decimal pl-6">
@@ -163,7 +173,7 @@ const BlogDetailData = ({ slug }: BlogDetailDataProps) => {
                 <li>It allows you to start your bid</li>
               </ol>
 
-              <Separator className="my-8 h-px border-0 bg-gray-200 dark:bg-gray-700"/>
+              <Separator className="my-8 h-px border-0 bg-gray-200 dark:bg-gray-700" />
 
               <h3 className="text-xl mb-3">Quotes</h3>
               <div className="pt-5 pb-4 px-4 rounded-md border-s-2 border-primary bg-lightgray dark:bg-darkmuted flex gap-1 items-start">

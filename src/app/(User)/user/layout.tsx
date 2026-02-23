@@ -22,7 +22,7 @@ async function isUserAuthenticated() {
     .update(baseValue)
     .digest("hex");
 
-  return sig === expected && Number.isFinite(Number(userIdRaw));
+  return sig === expected;
 }
 
 export default async function Layout({

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +32,8 @@ import {
   Printer,
   Trash,
   TrashIcon,
+  Edit,
+  Loader2,
 } from "lucide-react";
 import Swal from "sweetalert2";
 import {
@@ -39,6 +42,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import { motion } from "framer-motion";
 
 interface ItemOption {
   id: number;
@@ -46,6 +50,7 @@ interface ItemOption {
   description: string | null;
   stockNo: string | null;
   unit: string | null;
+  actualBalance: number | null;
 }
 
 interface RisRow {
@@ -57,13 +62,28 @@ interface RisRow {
   description: string;
   quantity: number;
   remarks: string;
+  available: number | null;
 }
 
 interface RequestRecord {
   id: number;
   createdAt: string;
   purpose: string;
+  released: boolean;
   items: RisRow[];
+  user: {
+    name: string;
+    officeHead: string | null;
+    department: string | null;
+    officeHeadDepartment: string | null;
+  };
+}
+
+interface UserProfileData {
+  name: string;
+  officeHead: string | null;
+  department: string | null;
+  officeHeadDepartment: string | null;
 }
 
 const queryClient = new QueryClient();
@@ -77,8 +97,49 @@ function UserHomePageInner() {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
   const queryClient = useQueryClient();
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
 
-  const { data: items = [] } = useQuery<ItemOption[]>({
+  const { data: settings, isLoading: isSettingsLoading } = useQuery({
+    queryKey: ["settings"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/settings");
+      if (!res.ok) {
+        throw new Error("Failed to load settings.");
+      }
+      const data = await res.json();
+      if (!data?.success || !data.settings) {
+        throw new Error("Failed to load settings.");
+      }
+      return data.settings;
+    },
+  });
+
+  const { data: profile, isLoading: isProfileLoading } =
+    useQuery<UserProfileData>({
+      queryKey: ["user-profile"],
+      queryFn: async () => {
+        const res = await fetch("/api/user/profile");
+        if (!res.ok) {
+          throw new Error("Failed to load profile.");
+        }
+        const data = await res.json();
+        if (!data?.success || !data.user) {
+          throw new Error("Failed to load profile.");
+        }
+        return {
+          name: data.user.name ?? "N/A",
+          department: data.user.department ?? null,
+          officeHead: data.user.officeHead ?? null,
+          officeHeadDepartment: data.user.officeHeadDepartment ?? null,
+        };
+      },
+    });
+
+  const { data: items = [], isLoading: isItemsLoading } = useQuery<
+    ItemOption[]
+  >({
     queryKey: ["admin-items"],
     queryFn: async () => {
       const res = await fetch("/api/admin/items");
@@ -92,11 +153,17 @@ function UserHomePageInner() {
         description: i.description ?? "",
         stockNo: i.stockNo ?? "",
         unit: i.unit ?? "",
+        actualBalance:
+          typeof i.actualBalance === "number"
+            ? i.actualBalance
+            : (i.balance ?? null),
       }));
     },
   });
 
-  const { data: requests = [] } = useQuery<RequestRecord[]>({
+  const { data: requests = [], isLoading: isRequestsLoading } = useQuery<
+    RequestRecord[]
+  >({
     queryKey: ["user-requests"],
     queryFn: async () => {
       const res = await fetch("/api/user/requests");
@@ -111,6 +178,13 @@ function UserHomePageInner() {
         id: req.id,
         createdAt: req.createdAt,
         purpose: req.purpose ?? "",
+        released: !!req.released,
+        user: req.user ?? {
+          name: "N/A",
+          officeHead: null,
+          department: null,
+          officeHeadDepartment: null,
+        },
         items: (req.items ?? []).map((item: any) => ({
           id: item.id,
           stockNo: item.stockNo ?? "",
@@ -119,6 +193,7 @@ function UserHomePageInner() {
           description: item.description ?? "",
           quantity: item.quantity ?? 0,
           remarks: item.remarks ?? "",
+          available: null,
         })),
       }));
     },
@@ -140,30 +215,30 @@ function UserHomePageInner() {
 
   const paginatedRequests = useMemo(
     () => requests.slice(startIndex, endIndex),
-    [requests, startIndex, endIndex]
+    [requests, startIndex, endIndex],
   );
 
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const source = new EventSource("/api/events");
+    // const source = new EventSource("/api/events");
 
-    source.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data?.type === "requests-updated") {
-          queryClient.invalidateQueries({ queryKey: ["user-requests"] });
-        }
-      } catch {}
-    };
+    // source.onmessage = (event) => {
+    //   try {
+    //     const data = JSON.parse(event.data);
+    //     if (data?.type === "requests-updated") {
+    //       queryClient.invalidateQueries({ queryKey: ["user-requests"] });
+    //     }
+    //   } catch {}
+    // };
 
-    source.onerror = () => {
-      source.close();
-    };
+    // source.onerror = () => {
+    //   source.close();
+    // };
 
-    return () => {
-      source.close();
-    };
+    // return () => {
+    //   source.close();
+    // };
   }, []);
 
   const addRowFromItem = (item: ItemOption) => {
@@ -171,7 +246,7 @@ function UserHomePageInner() {
       if (
         prev.some(
           (r) =>
-            r.stockNo === (item.stockNo ?? "") && r.description === item.name
+            r.stockNo === (item.stockNo ?? "") && r.description === item.name,
         )
       ) {
         return prev;
@@ -186,6 +261,11 @@ function UserHomePageInner() {
           name: item.name ?? "",
           description: item.description ?? "",
           quantity: 0,
+          available:
+            typeof item.actualBalance === "number" &&
+            !Number.isNaN(item.actualBalance)
+              ? item.actualBalance
+              : null,
           remarks: "",
         },
       ];
@@ -194,7 +274,7 @@ function UserHomePageInner() {
 
   const updateRow = (rowId: number, key: keyof RisRow, value: any) => {
     setRows((prev) =>
-      prev.map((r) => (r.id === rowId ? { ...r, [key]: value } : r))
+      prev.map((r) => (r.id === rowId ? { ...r, [key]: value } : r)),
     );
   };
 
@@ -208,100 +288,282 @@ function UserHomePageInner() {
     setSelectedItem(null);
   };
 
+  const handleEdit = (record: RequestRecord) => {
+    setEditingId(record.id);
+    setPurpose(record.purpose);
+    setRows(
+      record.items.map((item) => {
+        const matchingItem = items.find((i) => i.id === item.itemId);
+        return {
+          ...item,
+          itemId: item.itemId,
+          available: matchingItem?.actualBalance ?? null,
+        };
+      }),
+    );
+    setOpen(true);
+  };
+
+  // const handleSubmit = async () => {
+  //   if (rows.length === 0) {
+  //     Swal.fire({
+  //       icon: "warning",
+  //       title: "Missing Items",
+  //       text: "Please add at least one item.",
+  //       timer: 2000,
+  //       timerProgressBar: true,
+  //       showConfirmButton: false,
+  //       // allowOutsideClick: false,
+  //       allowEscapeKey: false,
+  //     });
+  //     return;
+  //   }
+
+  //   if (!purpose || purpose.trim().length === 0) {
+  //     Swal.fire({
+  //       icon: "warning",
+  //       title: "Purpose Required",
+  //       text: "Please enter a purpose for the request.",
+  //       timer: 2000,
+  //       timerProgressBar: true,
+  //       showConfirmButton: false,
+  //       // allowOutsideClick: false,
+  //       allowEscapeKey: false,
+  //     });
+  //     return;
+  //   }
+
+  //   if (!rows.every((r) => r.quantity > 0)) {
+  //     Swal.fire({
+  //       icon: "warning",
+  //       title: "Quantity Required",
+  //       text: "Please enter the quantity for all items.",
+  //       timer: 2000,
+  //       timerProgressBar: true,
+  //       showConfirmButton: false,
+  //       // allowOutsideClick: false,
+  //       allowEscapeKey: false,
+  //     });
+  //     return;
+  //   }
+
+  //   const overRequested = rows.find(
+  //     (r) => r.available !== null && r.quantity > (r.available ?? 0)
+  //   );
+
+  //   if (overRequested) {
+  //     Swal.fire({
+  //       icon: "warning",
+  //       title: "Quantity exceeds stock",
+  //       text: `Requested quantity for "${overRequested.name}" exceeds available stock (${overRequested.available}).`,
+  //       timer: 2500,
+  //       timerProgressBar: true,
+  //       showConfirmButton: false,
+  //       allowEscapeKey: false,
+  //     });
+  //     return;
+  //   }
+  //   try {
+  //     setIsSubmitting(true);
+
+  //     const res = await fetch("/api/user/requests", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({
+  //         purpose,
+  //         items: rows.map((row) => ({
+  //           itemId: row.itemId,
+  //           stockNo: row.stockNo,
+  //           unit: row.unit,
+  //           name: row.name,
+  //           description: row.description,
+  //           quantity: row.quantity,
+  //           remarks: row.remarks,
+  //         })),
+  //       }),
+  //     });
+
+  //     const data = await res.json().catch(() => null);
+
+  //     if (!res.ok || !data?.success) {
+  //       Swal.fire({
+  //         icon: "error",
+  //         title: "Error",
+  //         text: (data && data.message) || "Failed to save request.",
+  //       });
+  //       return;
+  //     }
+
+  //     const saved: RequestRecord = {
+  //       id: data.request.id,
+  //       createdAt:
+  //         typeof data.request.createdAt === "string"
+  //           ? data.request.createdAt
+  //           : new Date(data.request.createdAt).toISOString(),
+  //       purpose: data.request.purpose ?? "",
+  //       items: (data.request.items ?? []).map((item: any) => ({
+  //         id: item.id,
+  //         stockNo: item.stockNo ?? "",
+  //         unit: item.unit ?? "",
+  //         name: item.name ?? "",
+  //         description: item.description ?? "",
+  //         quantity: item.quantity ?? 0,
+  //         remarks: item.remarks ?? "",
+  //       })),
+  //     };
+
+  //     queryClient.setQueryData<RequestRecord[] | undefined>(
+  //       ["user-requests"],
+  //       (prev) => {
+  //         const existing = prev ?? [];
+  //         return [saved, ...existing];
+  //       }
+  //     );
+  //     setRows([]);
+  //     setPurpose("");
+  //     setSelectedItem(null);
+  //     setOpen(false);
+  //   } catch {
+  //     Swal.fire({
+  //       icon: "error",
+  //       title: "Error",
+  //       text: "Network error while saving request.",
+  //     });
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // };
+
   const handleSubmit = async () => {
-    if (rows.length === 0) {
-      Swal.fire({
+    if (!rows.length)
+      return Swal.fire({
         icon: "warning",
         title: "Missing Items",
         text: "Please add at least one item.",
         timer: 2000,
-        timerProgressBar: true,
         showConfirmButton: false,
-        allowOutsideClick: false,
-        allowEscapeKey: false,
       });
-      return;
+
+    if (!purpose?.trim())
+      return Swal.fire({
+        icon: "warning",
+        title: "Purpose Required",
+        text: "Please enter a purpose for the request.",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+
+    for (const r of rows) {
+      if (r.quantity <= 0)
+        return Swal.fire({
+          icon: "warning",
+          title: "Quantity Required",
+          text: "Please enter the quantity for all items.",
+          timer: 2000,
+          showConfirmButton: false,
+        });
+
+      if (r.available != null && r.quantity > r.available)
+        return Swal.fire({
+          icon: "warning",
+          title: "Quantity exceeds stock",
+          text: `Requested quantity for "${r.name}" exceeds available stock (${r.available}).`,
+          timer: 2500,
+          showConfirmButton: false,
+        });
     }
 
-    if (!rows.every((r) => r.quantity > 0)) {
-      Swal.fire({
-        icon: "warning",
-        title: "Quantity Required",
-        text: "Please enter the quantity for all items.",
-        timer: 2000,
-        timerProgressBar: true,
-        showConfirmButton: false,
-        allowOutsideClick: false,
-        allowEscapeKey: false,
-      });
-      return;
-    }
+    setIsSubmitting(true);
+
     try {
-      const res = await fetch("/api/user/requests", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+      const url = editingId
+        ? `/api/user/requests/${editingId}`
+        : "/api/user/requests";
+      const method = editingId ? "PATCH" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           purpose,
-          items: rows.map((row) => ({
-            itemId: row.itemId,
-            stockNo: row.stockNo,
-            unit: row.unit,
-            name: row.name,
-            description: row.description,
-            quantity: row.quantity,
-            remarks: row.remarks,
-          })),
+          items: rows.map(
+            ({
+              itemId,
+              stockNo,
+              unit,
+              name,
+              description,
+              quantity,
+              remarks,
+            }) => ({
+              itemId,
+              stockNo,
+              unit,
+              name,
+              description,
+              quantity,
+              remarks,
+            }),
+          ),
         }),
       });
 
-      const data = await res.json();
+      if (!res.ok) throw new Error("Request failed");
 
-      if (!res.ok || !data.success) {
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: data.message ?? "Failed to save request.",
-        });
-        return;
+      const { success, request, message } = await res.json();
+      if (!success) throw new Error(message);
+
+      if (editingId) {
+        queryClient.setQueryData<RequestRecord[]>(
+          ["user-requests"],
+          (prev = []) =>
+            prev.map((r) =>
+              r.id === editingId
+                ? {
+                    ...r,
+                    purpose: request.purpose,
+                    items: request.items,
+                  }
+                : r,
+            ),
+        );
+      } else {
+        queryClient.setQueryData<RequestRecord[]>(
+          ["user-requests"],
+          (prev = []) => [
+            {
+              id: request.id,
+              createdAt: new Date(request.createdAt).toISOString(),
+              purpose: request.purpose ?? "",
+              released: false,
+              items: request.items ?? [],
+              user: request.user ?? {
+                name: profile?.name ?? "N/A",
+                officeHead: profile?.officeHead ?? null,
+                department: profile?.department ?? null,
+                officeHeadDepartment: profile?.officeHeadDepartment ?? null,
+              },
+            },
+            ...prev,
+          ],
+        );
       }
 
-      const saved: RequestRecord = {
-        id: data.request.id,
-        createdAt:
-          typeof data.request.createdAt === "string"
-            ? data.request.createdAt
-            : new Date(data.request.createdAt).toISOString(),
-        purpose: data.request.purpose ?? "",
-        items: (data.request.items ?? []).map((item: any) => ({
-          id: item.id,
-          stockNo: item.stockNo ?? "",
-          unit: item.unit ?? "",
-          name: item.name ?? "",
-          description: item.description ?? "",
-          quantity: item.quantity ?? 0,
-          remarks: item.remarks ?? "",
-        })),
-      };
-
-      queryClient.setQueryData<RequestRecord[] | undefined>(
-        ["user-requests"],
-        (prev) => {
-          const existing = prev ?? [];
-          return [saved, ...existing];
-        }
-      );
       setRows([]);
       setPurpose("");
       setSelectedItem(null);
+      setEditingId(null);
       setOpen(false);
-    } catch {
+    } catch (err: any) {
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: "Network error while saving request.",
+        text: err.message || "Network error while saving request.",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -314,11 +576,18 @@ function UserHomePageInner() {
         showCancelButton: true,
         confirmButtonText: "Delete",
         cancelButtonText: "Cancel",
-        allowOutsideClick: false,
-        allowEscapeKey: false,
+        // allowOutsideClick: false,
+        // allowEscapeKey: false,
       });
 
       if (!result.isConfirmed) return;
+
+      setDeletingId(recordId);
+
+      queryClient.setQueryData<RequestRecord[] | undefined>(
+        ["user-requests"],
+        (prev) => (prev ?? []).filter((r) => r.id !== recordId),
+      );
 
       const res = await fetch(`/api/user/requests/${recordId}`, {
         method: "DELETE",
@@ -332,26 +601,33 @@ function UserHomePageInner() {
           title: "Error",
           text: data.message ?? "Failed to delete request.",
         });
+        queryClient.invalidateQueries({ queryKey: ["user-requests"] });
         return;
       }
-
-      queryClient.setQueryData<RequestRecord[] | undefined>(
-        ["user-requests"],
-        (prev) => (prev ?? []).filter((r) => r.id !== recordId)
-      );
     } catch {
       Swal.fire({
         icon: "error",
         title: "Error",
         text: "Network error while deleting request.",
+        timer: 2000,
+        timerProgressBar: true,
+        showConfirmButton: false,
+        allowEscapeKey: false,
       });
+      queryClient.invalidateQueries({ queryKey: ["user-requests"] });
+    } finally {
+      setDeletingId(null);
     }
   };
 
   const handlePrint = (record: RequestRecord) => {
     if (typeof window === "undefined") return;
 
-    const printWindow = window.open("", "_blank", "width=900,height=650");
+    const printWindow = window.open(
+      "",
+      "_blank",
+      `width=${screen.availWidth},height=${screen.availHeight},top=0,left=0`,
+    );
     if (!printWindow) return;
 
     const createdAt = new Date(record.createdAt).toLocaleString();
@@ -368,7 +644,7 @@ function UserHomePageInner() {
           <td class="cell center"></td>
           <td class="cell center"></td>
           <td class="cell">${item.remarks}</td>
-        </tr>`
+        </tr>`,
       )
       .join("");
 
@@ -505,10 +781,11 @@ function UserHomePageInner() {
             <div class="entity-row">
               <div class="entity-cell">
                 <span class="entity-label">Entity Name :</span>
-                <strong>DEPED - KABANKALAN /</strong>
+                <strong>${settings?.entityName}</strong>
               </div>
               <div class="entity-cell">
                 <span class="entity-label">Fund Cluster :</span>
+                <strong>${settings?.fundCluster}</strong>
               </div>
             </div>
 
@@ -516,11 +793,11 @@ function UserHomePageInner() {
               <div class="ris-header-left">
                 <div class="ris-header-left-row">
                   <span class="ris-header-label">Division :</span>
-                  <span class="ris-header-value">KABANKALAN CITY</span>
+                  <span class="ris-header-value">${settings?.division}</span>
                 </div>
                 <div class="ris-header-left-row">
                   <span class="ris-header-label">Office :</span>
-                  <span class="ris-header-value"></span>
+                  <span class="ris-header-value">${settings?.office}</span>
                 </div>
               </div>
               <div class="ris-header-right">
@@ -583,17 +860,17 @@ function UserHomePageInner() {
               </tr>
               <tr>
                 <td class="sign-cell sign-label-col">Printed Name :</td>
+                <td class="sign-cell">${record.user.name}</td>
+                <td class="sign-cell">${record.user.officeHead}</td>
                 <td class="sign-cell"></td>
-                <td class="sign-cell"></td>
-                <td class="sign-cell"></td>
-                <td class="sign-cell"></td>
+                <td class="sign-cell">${record.user.name}</td>
               </tr>
               <tr>
                 <td class="sign-cell sign-label-col">Designation :</td>
+                <td class="sign-cell">${record.user.department}</td>
+                <td class="sign-cell">${record.user.officeHeadDepartment}</td>
                 <td class="sign-cell"></td>
-                <td class="sign-cell"></td>
-                <td class="sign-cell"></td>
-                <td class="sign-cell"></td>
+                <td class="sign-cell">${record.user.department}</td>
               </tr>
               <tr>
                 <td class="sign-cell sign-label-col">Date :</td>
@@ -630,7 +907,36 @@ function UserHomePageInner() {
           </p>
         </div>
         <div className="flex sm:justify-end">
-          <Button variant="success" onClick={() => setOpen(true)}>
+          <Button
+            variant="success"
+            onClick={() => {
+              if (
+                !profile ||
+                !profile.officeHead?.trim() ||
+                !profile.officeHeadDepartment?.trim() ||
+                !profile.department?.trim()
+              ) {
+                Swal.fire({
+                  icon: "warning",
+                  title: "Profile incomplete",
+                  text: "Please update your Department, Office Head and Office Head Department in your profile before submitting a request.",
+                  // showCancelButton: true,
+                  confirmButtonText: "Go to Profile",
+                  cancelButtonText: "Continue",
+                }).then((result) => {
+                  if (result.isConfirmed) {
+                    if (typeof window !== "undefined") {
+                      window.location.href = "/user/Profile";
+                    }
+                    return;
+                  }
+                  // setOpen(true);
+                });
+                return;
+              }
+              setOpen(true);
+            }}
+          >
             Request <GitPullRequest />
           </Button>
         </div>
@@ -638,13 +944,18 @@ function UserHomePageInner() {
       <section className="space-y-3">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-lg font-semibold">Request list</h2>
-          {requests.length > 0 && (
+          {(requests.length > 0 || isRequestsLoading) && (
             <span className="text-xs text-muted-foreground">
-              Total requests: {requests.length}
+              Total requests: {isRequestsLoading ? "..." : requests.length}
             </span>
           )}
         </div>
-        {requests.length === 0 ? (
+        {isRequestsLoading ? (
+          <div className="flex flex-col items-center justify-center py-12 space-y-3 rounded-lg border border-border/60 bg-card/80 shadow-sm">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-muted-foreground text-sm">Loading requests...</p>
+          </div>
+        ) : requests.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             No requests yet. Submit a requisition to see it here.
           </p>
@@ -682,7 +993,17 @@ function UserHomePageInner() {
                       }
                     >
                       <td className="px-3 py-2 align-top whitespace-nowrap text-[11px] md:text-xs">
-                        {req.id}
+                        <div className="flex items-center gap-2">
+                          <span>{req.id}</span>
+                          {req.released && (
+                            <Badge
+                              variant="outlineSuccess"
+                              className="text-[9px] uppercase tracking-wide"
+                            >
+                              Released
+                            </Badge>
+                          )}
+                        </div>
                       </td>
                       <td className="px-3 py-2 align-top whitespace-nowrap text-[11px] md:text-xs">
                         {new Date(req.createdAt).toLocaleString()}
@@ -713,17 +1034,36 @@ function UserHomePageInner() {
                             size="icon"
                             variant="destructive"
                             className="h-7 w-7"
+                            disabled={deletingId === req.id || req.released}
                             onClick={() => handleDelete(req.id)}
                           >
-                            <Trash className="h-3 w-3" />
+                            {deletingId === req.id ? (
+                              <span className="h-3 w-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <Trash className="h-3 w-3" />
+                            )}
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="default"
+                            className="h-7 w-7"
+                            disabled={deletingId === req.id || req.released}
+                            onClick={() => handleEdit(req)}
+                          >
+                            <Edit className="h-3 w-3" />
                           </Button>
                           <Button
                             size="icon"
                             variant="success"
                             className="h-7 w-7"
+                            disabled={deletingId === req.id || req.released}
                             onClick={() => handlePrint(req)}
                           >
-                            <Printer className="h-3 w-3" />
+                            {deletingId === req.id ? (
+                              <span className="h-3 w-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <Printer className="h-3 w-3" />
+                            )}
                           </Button>
                         </div>
                       </td>
@@ -738,7 +1078,7 @@ function UserHomePageInner() {
                   Showing{" "}
                   {`${Math.min(startIndex + 1, requests.length)}-${Math.min(
                     endIndex,
-                    requests.length
+                    requests.length,
                   )}`}{" "}
                   of {requests.length} requests
                 </div>
@@ -773,11 +1113,22 @@ function UserHomePageInner() {
         )}
       </section>
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog
+        open={open}
+        onOpenChange={(isOpen) => {
+          setOpen(isOpen);
+          if (!isOpen) {
+            setEditingId(null);
+            setPurpose("");
+            setRows([]);
+            setSelectedItem(null);
+          }
+        }}
+      >
         <DialogContent className="max-w-4xl rounded-2xl">
           <DialogHeader>
             <DialogTitle className="text-center">
-              REQUISITION AND ISSUE SLIP
+              {editingId ? "EDIT" : "CREATE"} REQUISITION AND ISSUE SLIP
             </DialogTitle>
           </DialogHeader>
 
@@ -812,6 +1163,14 @@ function UserHomePageInner() {
                     <CommandInput placeholder="Search item..." />
                     <CommandEmpty>No item found.</CommandEmpty>
                     <CommandList>
+                      {isItemsLoading && (
+                        <div className="flex items-center justify-center py-6">
+                          <Loader2 className="h-4 w-4 animate-spin text-primary mr-2" />
+                          <span className="text-xs text-muted-foreground">
+                            Loading items...
+                          </span>
+                        </div>
+                      )}
                       <CommandGroup>
                         {items.map((item) => (
                           <CommandItem
@@ -853,8 +1212,17 @@ function UserHomePageInner() {
               />
             </div>
             <div className="text-right">
-              <Button variant="success" onClick={handleSubmit}>
-                Submit <FileCheck className="ml-2 h-4 w-4 shrink-0" />
+              <Button
+                variant="success"
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <span className="mr-2 h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <FileCheck className="mr-2 h-4 w-4 shrink-0" />
+                )}
+                Submit
               </Button>
             </div>
           </div>
@@ -876,6 +1244,12 @@ function UserHomePageInner() {
             </thead>
             <tbody>
               {rows.map((row) => (
+                // <motion.tr
+                //   key={row.id}
+                //   initial={{ opacity: 0, y: 6
+                //   animate={{ opacity: 1, y: 0 }}
+                //   className="bg-background/40 dark:bg-transparent hover:bg-muted/40 dark:hover:bg-white/[0.06] transition-colors"
+                // >
                 <tr key={row.id}>
                   <td className="border border-border px-1 py-1">
                     <Input
@@ -915,12 +1289,28 @@ function UserHomePageInner() {
                       value={row.quantity === 0 ? "" : row.quantity}
                       onChange={(e) => {
                         const val = e.target.value;
-                        const num =
+                        let num =
                           val === ""
                             ? 0
                             : Number.isNaN(Number(val))
-                            ? 0
-                            : Number(val);
+                              ? 0
+                              : Number(val);
+                        if (
+                          row.available !== null &&
+                          !Number.isNaN(row.available) &&
+                          num > row.available
+                        ) {
+                          num = row.available;
+                          Swal.fire({
+                            icon: "warning",
+                            title: "Quantity exceeds stock",
+                            text: `Available stock for "${row.name}" is ${row.available}.`,
+                            timer: 2000,
+                            timerProgressBar: true,
+                            showConfirmButton: false,
+                            allowEscapeKey: false,
+                          });
+                        }
                         updateRow(row.id, "quantity", num);
                       }}
                     />

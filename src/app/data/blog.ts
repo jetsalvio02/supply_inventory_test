@@ -84,7 +84,8 @@ export const BlogPost: BlogPostType[] = [
   },
   {
     id: 3,
-    title: "Apple is apparently working on a new streamlined accessibility for iOS",
+    title:
+      "Apple is apparently working on a new streamlined accessibility for iOS",
     content: "New accessibility features coming to iOS.",
     coverImg: "/images/blog/blog-img3.jpg",
     createdAt: new Date("2023-12-26"),
@@ -152,7 +153,8 @@ export const BlogPost: BlogPostType[] = [
   },
   {
     id: 7,
-    title: "Intel loses bid to revive antitrust case against patent foe Fortress",
+    title:
+      "Intel loses bid to revive antitrust case against patent foe Fortress",
     content: "Legal developments in tech industry.",
     coverImg: "/images/blog/blog-img11.jpg",
     createdAt: new Date("2023-12-28"),

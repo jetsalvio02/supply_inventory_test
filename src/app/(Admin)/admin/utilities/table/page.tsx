@@ -35,7 +35,7 @@ const PopularProducts = () => {
       statuscolor: "secondary",
       statustext: "Confirmed",
       progessvariant: "warning",
-      bedgevariant: "lightSuccess"
+      bedgevariant: "lightSuccess",
     },
     {
       img: "/images/products/dash-prd-2.jpg",
@@ -47,7 +47,7 @@ const PopularProducts = () => {
       statuscolor: "success",
       statustext: "Confirmed",
       progessvariant: "progress",
-      bedgevariant: "lightSuccess"
+      bedgevariant: "lightSuccess",
     },
     {
       img: "/images/products/dash-prd-3.jpg",
@@ -59,7 +59,7 @@ const PopularProducts = () => {
       statuscolor: "error",
       statustext: "Cancelled",
       progessvariant: "error",
-      bedgevariant: "lightError"
+      bedgevariant: "lightError",
     },
     {
       img: "/images/products/s5.jpg",
@@ -71,7 +71,7 @@ const PopularProducts = () => {
       statuscolor: "secondary",
       statustext: "Confirmed",
       progessvariant: "warning",
-      bedgevariant: "lightSuccess"
+      bedgevariant: "lightSuccess",
     },
     {
       img: "/images/products/dash-prd-4.jpg",
@@ -83,7 +83,7 @@ const PopularProducts = () => {
       statuscolor: "success",
       statustext: "Confirmed",
       progessvariant: "progress",
-      bedgevariant: "lightSuccess"
+      bedgevariant: "lightSuccess",
     },
   ];
 

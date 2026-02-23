@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import Swal from "sweetalert2";
 
 export default function CreateUserPage() {
   const router = useRouter();
@@ -33,13 +34,21 @@ export default function CreateUserPage() {
     const trimmedPassword = newPassword.trim();
 
     if (!trimmedName || !trimmedId || !trimmedPassword) {
-      alert("Please enter Name, ID, and Password.");
+      // alert("Please enter Name, ID, and Password.");
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Please enter Name, ID, and Password.",
+      });
       return;
     }
 
-    const numericId = Number(trimmedId);
-    if (Number.isNaN(numericId)) {
-      alert("ID must be a number.");
+    if (!/^\d+$/.test(trimmedId)) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "ID must contain only digits.",
+      });
       return;
     }
 
@@ -50,7 +59,7 @@ export default function CreateUserPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          id: numericId,
+          id: trimmedId,
           name: trimmedName,
           password: trimmedPassword,
           role: "staff",
@@ -60,14 +69,29 @@ export default function CreateUserPage() {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        alert(data.message ?? "Failed to create user.");
+        // alert(data.message ?? "Failed to create user.");
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: data.message ?? "Failed to create user.",
+        });
         return;
       }
 
-      alert("User created.");
+      // alert("User created.");
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: "User created successfully.",
+      });
       router.push("/Users");
     } catch (e) {
-      alert("Network error while creating user.");
+      // alert("Network error while creating user.");
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Network error while creating user.",
+      });
     }
   };
 

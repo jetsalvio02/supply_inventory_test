@@ -90,7 +90,13 @@ const SidebarContent: MenuItem[] = [
         url: "/admin/Requisition_and_Issue",
         isPro: false,
       },
-
+      // {
+      //   name: "Departments/OfficeHeads",
+      //   icon: Users,
+      //   id: uniqueId(),
+      //   url: "/admin/Departments/Office_Heads",
+      //   isPro: false,
+      // },
       // {
       //   name: "Stock In",
       //   icon: "solar:widget-add-line-duotone",
@@ -132,6 +138,20 @@ const SidebarContent: MenuItem[] = [
         url: "/admin/Reports",
         isPro: false,
       },
+      {
+        name: "Supplies Stock Card",
+        icon: FileText,
+        id: uniqueId(),
+        url: "/admin/Stock_Card",
+        isPro: false,
+      },
+      {
+        name: "Supplies Ledger Card",
+        icon: FileText,
+        id: uniqueId(),
+        url: "/admin/Ledger_Card",
+        isPro: false,
+      },
     ],
   },
   {
@@ -144,8 +164,23 @@ const SidebarContent: MenuItem[] = [
         url: "/admin/Users",
         isPro: false,
       },
+      {
+        name: "Departments/OfficeHeads",
+        icon: List,
+        id: uniqueId(),
+        url: "/admin/Departments_and_OfficeHeads",
+        isPro: false,
+      },
     ],
   },
+  // {
+  //   heading: "Departments/Office Heads",
+  //   children: [
+  //     {
+
+  //     },
+  //   ],
+  // },
   {
     heading: "Settings",
     children: [

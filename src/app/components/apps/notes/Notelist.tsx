@@ -4,7 +4,11 @@ import { Icon } from "@iconify/react";
 import React, { useState, useEffect } from "react";
 import { NotesType } from "@/app/(Admin)/admin/types/apps/notes";
 import { Input } from "@/components/ui/input";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 
@@ -15,7 +19,12 @@ interface NotelistProps {
   onDeleteNote: (noteId: string) => void;
 }
 
-const Notelist: React.FC<NotelistProps> = ({ notes, loading, onSelectNote, onDeleteNote }) => {
+const Notelist: React.FC<NotelistProps> = ({
+  notes,
+  loading,
+  onSelectNote,
+  onDeleteNote,
+}) => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
 
@@ -30,14 +39,16 @@ const Notelist: React.FC<NotelistProps> = ({ notes, loading, onSelectNote, onDel
     if (nSearch !== "")
       return notes.filter(
         (t: any) =>
-          !t.deleted &&
-          t.title.toLowerCase().includes(nSearch.toLowerCase())
+          !t.deleted && t.title.toLowerCase().includes(nSearch.toLowerCase())
       );
 
     return notes?.filter((t: any) => !t.deleted);
   };
 
-  const filteredNotes = filterNotes(Array.isArray(notes) ? notes : [], searchTerm);
+  const filteredNotes = filterNotes(
+    Array.isArray(notes) ? notes : [],
+    searchTerm
+  );
 
   const handleNoteClick = (noteId: string) => {
     setActiveNoteId(noteId);
@@ -63,8 +74,12 @@ const Notelist: React.FC<NotelistProps> = ({ notes, loading, onSelectNote, onDel
           filteredNotes.map((note: any, index: any) => (
             <div key={index}>
               <div
-                className={`cursor-pointer relative p-4 rounded-md bg-light${note.color} dark:bg-dark${note.color}
-                ${activeNoteId === note.id ? "scale-100" : "scale-95"} transition-transform duration-200`}
+                className={`cursor-pointer relative p-4 rounded-md bg-light${
+                  note.color
+                } dark:bg-dark${note.color}
+                ${
+                  activeNoteId === note.id ? "scale-100" : "scale-95"
+                } transition-transform duration-200`}
                 onClick={() => handleNoteClick(note.id)}
               >
                 <h6 className={`text-base truncate text-${note.color}`}>

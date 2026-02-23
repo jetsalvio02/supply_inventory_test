@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   if (Number.isNaN(year)) {
     return NextResponse.json(
       { success: false, message: "Invalid year parameter" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -48,25 +48,16 @@ export async function GET(request: NextRequest) {
       and(
         eq(inventoryTransactions.type, "OUT"),
         gte(inventoryTransactions.createdAt, start),
-        lt(inventoryTransactions.createdAt, end)
-      )
+        lt(inventoryTransactions.createdAt, end),
+      ),
     );
 
-  const perItem: Record<
-    number,
-    { janFeb: number; march: number; april: number; may: number; june: number }
-  > = {};
+  const perItem: Record<number, number[]> = {};
 
   for (const row of txRows) {
     const itemId = row.itemId;
     if (!perItem[itemId]) {
-      perItem[itemId] = {
-        janFeb: 0,
-        march: 0,
-        april: 0,
-        may: 0,
-        june: 0,
-      };
+      perItem[itemId] = new Array(12).fill(0);
     }
 
     if (!row.createdAt) {
@@ -77,30 +68,16 @@ export async function GET(request: NextRequest) {
       row.createdAt instanceof Date
         ? row.createdAt
         : new Date(row.createdAt as any);
-    const month = createdAt.getMonth();
+    const month = createdAt.getMonth(); // 0-11
     const quantity = row.quantity ?? 0;
 
-    if (month === 0 || month === 1) {
-      perItem[itemId].janFeb += quantity;
-    } else if (month === 2) {
-      perItem[itemId].march += quantity;
-    } else if (month === 3) {
-      perItem[itemId].april += quantity;
-    } else if (month === 4) {
-      perItem[itemId].may += quantity;
-    } else if (month === 5) {
-      perItem[itemId].june += quantity;
+    if (month >= 0 && month <= 11) {
+      perItem[itemId][month] += quantity;
     }
   }
 
   const itemsReport = baseRows.map((row) => {
-    const monthly = perItem[row.id] ?? {
-      janFeb: 0,
-      march: 0,
-      april: 0,
-      may: 0,
-      june: 0,
-    };
+    const monthly = perItem[row.id] ?? new Array(12).fill(0);
 
     return {
       id: row.id,
@@ -111,11 +88,18 @@ export async function GET(request: NextRequest) {
       newDelivery: row.totalIn ?? 0,
       released: row.totalOut ?? 0,
       actualBalance: row.actualBalance ?? 0,
-      janFeb: monthly.janFeb,
-      march: monthly.march,
-      april: monthly.april,
-      may: monthly.may,
-      june: monthly.june,
+      jan: monthly[0],
+      feb: monthly[1],
+      mar: monthly[2],
+      apr: monthly[3],
+      may: monthly[4],
+      jun: monthly[5],
+      jul: monthly[6],
+      aug: monthly[7],
+      sep: monthly[8],
+      oct: monthly[9],
+      nov: monthly[10],
+      dec: monthly[11],
     };
   });
 

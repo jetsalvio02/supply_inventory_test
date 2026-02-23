@@ -74,7 +74,8 @@ export default function UserNavbar() {
           </div>
 
           <Button
-            variant="outlineerror"
+            variant="destructive"
+            className="text-white"
             size="sm"
             onClick={async () => {
               Swal.fire({

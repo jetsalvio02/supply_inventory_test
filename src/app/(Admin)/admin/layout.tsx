@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Header from "./layout/header/Header";
 import Sidebar from "./layout/sidebar/Sidebar";
 import crypto from "crypto";
+import AdminQueryProvider from "./AdminQueryProvider";
 
 const authCookieSecret = process.env.AUTH_COOKIE_SECRET || "dev-secret";
 
@@ -22,7 +23,7 @@ async function readAuthenticatedRole() {
     .update(baseValue)
     .digest("hex");
 
-  if (sig !== expected || !Number.isFinite(Number(userIdRaw))) {
+  if (sig !== expected) {
     return null;
   }
 
@@ -41,7 +42,7 @@ export default async function Layout({
   }
 
   return (
-    <>
+    <AdminQueryProvider>
       <div className="flex w-full min-h-screen">
         <div className="page-wrapper flex w-full">
           <div className="xl:block hidden">
@@ -50,12 +51,14 @@ export default async function Layout({
 
           <div className="body-wrapper w-full">
             <Header />
-            <div className="bg-lightgray dark:bg-dark mr-3 rounded-3xl min-h-[90vh]">
-              <div className={`container mx-auto px-6 py-3`}>{children}</div>
+            <div className="bg-lightgray dark:bg-dark mr-0 sm:mr-3 rounded-none sm:rounded-3xl min-h-[90vh]">
+              <div className="container mx-auto px-3 py-3 sm:px-6">
+                {children}
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </>
+    </AdminQueryProvider>
   );
 }

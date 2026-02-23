@@ -34,7 +34,7 @@ const TicketsApp = () => {
 
   const searchTickets = (text: string) => {
     setTicketSearch(text);
-  };  
+  };
 
   return (
     <CardBox className="bg-background">

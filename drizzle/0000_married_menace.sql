@@ -1,5 +1,5 @@
-CREATE TYPE "public"."item_status" AS ENUM('IN_STOCK', 'OUT_OF_STOCK');--> statement-breakpoint
-CREATE TYPE "public"."transaction_type" AS ENUM('IN', 'OUT', 'FORWARD');--> statement-breakpoint
+CREATE TYPE IF NOT EXISTS "public"."item_status" AS ENUM('IN_STOCK', 'OUT_OF_STOCK');--> statement-breakpoint
+CREATE TYPE IF NOT EXISTS "public"."transaction_type" AS ENUM('IN', 'OUT', 'FORWARD');--> statement-breakpoint
 CREATE TABLE "categories" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"name" varchar(100) NOT NULL,

@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, count } from "drizzle-orm";
 import { database } from "@/lib/db";
-import { risRequests, risRequestItems, users } from "@/lib/db/schema";
+import {
+  risRequests,
+  risRequestItems,
+  users,
+  inventoryTransactions,
+} from "@/lib/db/schema";
 
 export async function GET() {
   try {
@@ -72,7 +77,20 @@ export async function GET() {
 
     const normalized = Array.from(map.values());
 
-    return NextResponse.json({ success: true, requests: normalized });
+    const withStatus = await Promise.all(
+      normalized.map(async (req) => {
+        const [usage] = await database
+          .select({ total: count() })
+          .from(inventoryTransactions)
+          .where(eq(inventoryTransactions.remarks, `RIS #${req.id}`));
+
+        const released = !!usage && usage.total > 0;
+
+        return { ...req, released };
+      })
+    );
+
+    return NextResponse.json({ success: true, requests: withStatus });
   } catch (error: any) {
     return NextResponse.json(
       { success: false, message: error?.message ?? "Failed to load requests" },
@@ -80,4 +98,3 @@ export async function GET() {
     );
   }
 }
-

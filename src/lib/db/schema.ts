@@ -26,13 +26,30 @@ export const itemStatusEnum = pgEnum("item_status", [
 ]);
 
 /* =========================================================
-   USERS (unchanged)
+   USERS, OFFICE HEADS, DEPARTMENTS
 ========================================================= */
+export const officeHeads = pgTable("office_heads", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const departments = pgTable("departments", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const users = pgTable("users", {
-  id: integer("id").primaryKey(),
+  id: varchar("id", { length: 50 }).primaryKey(),
   name: varchar("name", { length: 150 }).notNull(),
   role: varchar("role", { length: 50 }).default("staff"),
   password: varchar("password", { length: 255 }).notNull(),
+  officeHeadId: integer("office_head_id").references(() => officeHeads.id),
+  officeHeadDepartmentId: integer("office_head_department_id").references(
+    () => departments.id
+  ),
+  departmentId: integer("department_id").references(() => departments.id),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -134,7 +151,7 @@ export const inventoryTransactions = pgTable(
 
     // supplierId: integer("supplier_id").references(() => suppliers.id),
 
-    userId: integer("user_id")
+    userId: varchar("user_id", { length: 50 })
       .references(() => users.id)
       .notNull(),
 
@@ -218,7 +235,7 @@ export const stockCards = pgTable(
 
 export const risRequests = pgTable("ris_requests", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id")
+  userId: varchar("user_id", { length: 50 })
     .references(() => users.id, { onDelete: "set null" })
     .notNull(),
   purpose: text("purpose"),
@@ -239,4 +256,17 @@ export const risRequestItems = pgTable("ris_request_items", {
   description: text("description"),
   quantity: integer("quantity").notNull(),
   remarks: text("remarks"),
+});
+
+/* =========================================================
+   SYSTEM SETTINGS
+========================================================= */
+export const systemSettings = pgTable("system_settings", {
+  id: serial("id").primaryKey(),
+  entityName: varchar("entity_name", { length: 255 }),
+  referenceIarNo: varchar("reference_iar_no", { length: 255 }),
+  fundCluster: varchar("fund_cluster", { length: 255 }),
+  division: varchar("division", { length: 255 }),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });

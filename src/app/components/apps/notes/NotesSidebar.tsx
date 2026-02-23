@@ -10,8 +10,12 @@ interface NotesSidebarProps {
   onDeleteNote: (noteId: string) => void;
 }
 
-const NotesSidebar: React.FC<NotesSidebarProps> = ({ notes, loading, onSelectNote, onDeleteNote }) => {  
-
+const NotesSidebar: React.FC<NotesSidebarProps> = ({
+  notes,
+  loading,
+  onSelectNote,
+  onDeleteNote,
+}) => {
   return (
     <>
       <div className="left-part">

@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Printer } from "lucide-react";
+import { Printer, RotateCcw, Search, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import Swal from "sweetalert2";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface RisRow {
   id: number;
@@ -22,41 +25,105 @@ interface RequestRecord {
   createdAt: string;
   purpose: string;
   userName: string | null;
+  released: boolean;
   items: RisRow[];
 }
 
 export default function AdminRequestListPage() {
   const router = useRouter();
-  const [requests, setRequests] = useState<RequestRecord[]>([]);
-  const loadRequests = () => {
-    fetch("/api/admin/requests")
-      .then((r) => r.json())
-      .then((data: any) => {
-        if (!data?.success || !Array.isArray(data.requests)) return;
-        setRequests(
-          data.requests.map((req: any) => ({
-            id: req.id,
-            createdAt: req.createdAt,
-            purpose: req.purpose ?? "",
-            userName: req.userName ?? null,
-            items: (req.items ?? []).map((item: any) => ({
-              id: item.id,
-              stockNo: item.stockNo ?? "",
-              unit: item.unit ?? "",
-              name: item.name ?? "",
-              description: item.description ?? "",
-              quantity: item.quantity ?? 0,
-              remarks: item.remarks ?? "",
-            })),
-          }))
+  const queryClient = useQueryClient();
+  const [filterMode, setFilterMode] = useState<"all" | "pending" | "released">(
+    "pending",
+  );
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+
+  const { data: requests = [], isLoading } = useQuery<RequestRecord[]>({
+    queryKey: ["admin-requests"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/requests");
+      if (!res.ok) {
+        throw new Error("Failed to load requests");
+      }
+      const data = await res.json();
+      if (!data?.success || !Array.isArray(data.requests)) {
+        return [];
+      }
+      return data.requests.map((req: any) => ({
+        id: req.id,
+        createdAt: req.createdAt,
+        purpose: req.purpose ?? "",
+        userName: req.userName ?? null,
+        released: !!req.released,
+        items: (req.items ?? []).map((item: any) => ({
+          id: item.id,
+          stockNo: item.stockNo ?? "",
+          unit: item.unit ?? "",
+          name: item.name ?? "",
+          description: item.description ?? "",
+          quantity: item.quantity ?? 0,
+          remarks: item.remarks ?? "",
+        })),
+      }));
+    },
+
+    refetchInterval: 2000,
+    refetchIntervalInBackground: true,
+  });
+
+  const statusFilteredRequests = useMemo(() => {
+    return requests.filter((req) => {
+      if (filterMode === "pending") return !req.released;
+      if (filterMode === "released") return req.released;
+      return true;
+    });
+  }, [requests, filterMode]);
+
+  const filteredRequests = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    if (!term) return statusFilteredRequests;
+
+    return statusFilteredRequests.filter((req) => {
+      const inId = String(req.id).includes(term);
+      const inUser = (req.userName ?? "").toLowerCase().includes(term);
+      const inPurpose = (req.purpose ?? "").toLowerCase().includes(term);
+
+      const inItems = req.items.some((item) => {
+        const name = (item.name ?? "").toLowerCase();
+        const desc = (item.description ?? "").toLowerCase();
+        const stockNo = (item.stockNo ?? "").toLowerCase();
+        return (
+          name.includes(term) || desc.includes(term) || stockNo.includes(term)
         );
-      })
-      .catch(() => {});
-  };
+      });
+
+      return inId || inUser || inPurpose || inItems;
+    });
+  }, [statusFilteredRequests, search]);
+
+  const totalPages = useMemo(() => {
+    if (!filteredRequests.length) return 1;
+    return Math.ceil(filteredRequests.length / pageSize);
+  }, [filteredRequests.length, pageSize]);
 
   useEffect(() => {
-    loadRequests();
-  }, []);
+    setCurrentPage(1);
+  }, [search, filterMode]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+
+  const paginatedRequests = useMemo(
+    () => filteredRequests.slice(startIndex, endIndex),
+    [filteredRequests, startIndex, endIndex],
+  );
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -67,7 +134,7 @@ export default function AdminRequestListPage() {
       try {
         const data = JSON.parse(event.data);
         if (data?.type === "requests-updated") {
-          loadRequests();
+          queryClient.invalidateQueries({ queryKey: ["admin-requests"] });
         }
       } catch {}
     };
@@ -79,17 +146,19 @@ export default function AdminRequestListPage() {
     return () => {
       source.close();
     };
-  }, []);
+  }, [queryClient]);
 
   const handleRelease = async (record: RequestRecord) => {
-    const confirmRelease =
-      typeof window !== "undefined"
-        ? window.confirm(
-            "Release items for this request and deduct them from inventory?"
-          )
-        : true;
+    const confirmRelease = await Swal.fire({
+      icon: "warning",
+      title: "Are you sure?",
+      text: "Release items for this request and deduct them from inventory?",
+      showCancelButton: true,
+      confirmButtonText: "Release",
+      cancelButtonText: "Cancel",
+    });
 
-    if (!confirmRelease) return;
+    if (!confirmRelease.isConfirmed) return;
 
     try {
       const res = await fetch(`/api/admin/requests/${record.id}/release`, {
@@ -103,20 +172,83 @@ export default function AdminRequestListPage() {
           (data && typeof data.message === "string" && data.message) ||
           "Failed to release items for this request.";
 
-        if (typeof window !== "undefined") {
-          window.alert(message);
-        }
+        await Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: message,
+        });
 
         return;
       }
 
-      setRequests((prev) => prev.filter((r) => r.id !== record.id));
+      await Swal.fire({
+        icon: "success",
+        title: "Released",
+        text: "Items have been released successfully.",
+        timer: 2000,
+        showConfirmButton: false,
+        timerProgressBar: true,
+      });
 
-      router.push("/admin/Item_List");
-    } catch {
-      if (typeof window !== "undefined") {
-        window.alert("Network error while releasing items. Please try again.");
+      queryClient.invalidateQueries({ queryKey: ["admin-requests"] });
+    } catch (err: any) {
+      console.error("Release error:", err);
+      await Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Network error while releasing items. Please try again.",
+      });
+    }
+  };
+
+  const handleRollback = async (record: RequestRecord) => {
+    const confirmRollback = await Swal.fire({
+      icon: "warning",
+      title: "Rollback Release?",
+      text: "This will undo the release and restore the deducted quantities back to inventory.",
+      showCancelButton: true,
+      confirmButtonText: "Rollback",
+      cancelButtonText: "Cancel",
+    });
+
+    if (!confirmRollback.isConfirmed) return;
+
+    try {
+      const res = await fetch(`/api/admin/requests/${record.id}/rollback`, {
+        method: "POST",
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok || !data?.success) {
+        const message =
+          (data && typeof data.message === "string" && data.message) ||
+          "Failed to rollback this request.";
+
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: message,
+        });
+
+        return;
       }
+
+      Swal.fire({
+        icon: "success",
+        title: "Rolled Back",
+        text: "The release has been undone and inventory quantities have been restored.",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["admin-requests"] });
+    } catch {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Network error while rolling back. Please try again.",
+      });
     }
   };
 
@@ -140,7 +272,7 @@ export default function AdminRequestListPage() {
           <td class="cell center"></td>
           <td class="cell center"></td>
           <td class="cell">${item.remarks}</td>
-        </tr>`
+        </tr>`,
       )
       .join("");
 
@@ -392,102 +524,175 @@ export default function AdminRequestListPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">All RIS Requests</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            View requisition and issue slip requests submitted by all users.
-          </p>
+    <div className="min-h-screen bg-background px-3 py-4 sm:px-6 sm:py-6 space-y-4 sm:space-y-6 rounded-2xl">
+      <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold">All RIS Requests</h1>
+            <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
+              View requisition and issue slip requests submitted by all users.
+            </p>
+          </div>
+          <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:gap-3 w-full md:w-auto">
+            <div className="relative w-full sm:w-64">
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                size={16}
+              />
+              <Input
+                type="text"
+                placeholder="Search by ref #, user, purpose, item..."
+                className="pl-9 h-8 text-xs sm:text-sm"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-[11px] sm:text-xs">
+              <span className="text-muted-foreground">Filter:</span>
+              <Button
+                size="sm"
+                variant={filterMode === "pending" ? "success" : "outline"}
+                className="h-7 px-2"
+                onClick={() => setFilterMode("pending")}
+              >
+                Pending
+              </Button>
+              <Button
+                size="sm"
+                variant={filterMode === "released" ? "success" : "outline"}
+                className="h-7 px-2"
+                onClick={() => setFilterMode("released")}
+              >
+                Released
+              </Button>
+              <Button
+                size="sm"
+                variant={filterMode === "all" ? "success" : "outline"}
+                className="h-7 px-2"
+                onClick={() => setFilterMode("all")}
+              >
+                All
+              </Button>
+            </div>
+          </div>
         </div>
-      </div>
 
-      {requests.length === 0 ? (
-        <Card className="rounded-2xl border border-border/60 dark:border-white/5 bg-card/80 dark:bg-white/[0.03] shadow-sm">
-          <CardContent className="p-6 text-sm text-muted-foreground">
-            No RIS requests found.
-          </CardContent>
-        </Card>
-      ) : (
-        <Card className="rounded-2xl border border-border/60 dark:border-white/5 bg-card/80 dark:bg-white/[0.03] shadow-sm">
-          <CardContent className="p-0 overflow-x-auto">
-            <table className="w-full text-xs md:text-sm text-foreground/90">
-              <thead className="bg-muted/80 dark:bg-white/[0.04] text-left border-b border-border/60 dark:border-white/10">
-                <tr>
-                  <th className="px-3 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
-                    Ref #
-                  </th>
-                  <th className="px-3 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
-                    Date
-                  </th>
-                  <th className="px-3 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
-                    User
-                  </th>
-                  <th className="px-3 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
-                    Items / Quantity
-                  </th>
-                  <th className="px-3 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide hidden md:table-cell">
-                    Purpose
-                  </th>
-                  <th className="px-3 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide text-right">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/60 dark:divide-white/5">
-                {requests.map((req, index) => (
-                  <tr
-                    key={req.id}
-                    className={
-                      index % 2 === 0
-                        ? "bg-background/40 dark:bg-transparent"
-                        : "bg-muted/30 dark:bg-white/[0.03]"
-                    }
-                  >
-                    <td className="px-3 py-2 align-top whitespace-nowrap text-[11px] md:text-xs">
-                      {req.id}
-                    </td>
-                    <td className="px-3 py-2 align-top whitespace-nowrap text-[11px] md:text-xs">
-                      {new Date(req.createdAt).toLocaleString()}
-                    </td>
-                    <td className="px-3 py-2 align-top whitespace-nowrap text-[11px] md:text-xs">
-                      {req.userName ?? "-"}
-                    </td>
-                    <td className="px-3 py-2 align-top">
-                      <div className="space-y-0.5">
-                        {req.items.map((item) => (
-                          <div
-                            key={item.id}
-                            className="flex items-center justify-between gap-2 text-[11px] md:text-xs"
-                          >
-                            <span className="truncate">
-                              {`${item.name} (${item.description})`}
-                            </span>
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-12 space-y-3">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-muted-foreground text-sm">Loading requests...</p>
+          </div>
+        ) : filteredRequests.length === 0 ? (
+          <Card className="rounded-2xl border border-border/60 dark:border-white/5 bg-card/80 dark:bg-white/[0.03] shadow-sm">
+            <CardContent className="p-6 text-sm text-muted-foreground">
+              No RIS requests found.
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="rounded-2xl border border-border/60 dark:border-white/5 bg-card/80 dark:bg-white/[0.03] shadow-sm">
+            <CardContent className="p-0 overflow-x-auto">
+              <table className="w-full text-xs md:text-sm text-foreground/90">
+                <thead className="bg-muted/80 dark:bg-white/[0.04] text-left border-b border-border/60 dark:border-white/10">
+                  <tr>
+                    <th className="px-3 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
+                      Ref #
+                    </th>
+                    <th className="px-3 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
+                      Date
+                    </th>
+                    <th className="px-3 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
+                      User
+                    </th>
+                    <th className="px-3 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
+                      Items / Quantity
+                    </th>
+                    <th className="px-3 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide hidden md:table-cell">
+                      Purpose
+                    </th>
+                    <th className="px-3 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide text-right">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/60 dark:divide-white/5">
+                  {paginatedRequests.map((req, index) => (
+                    <tr
+                      key={req.id}
+                      className={
+                        index % 2 === 0
+                          ? "bg-background/40 dark:bg-transparent"
+                          : "bg-muted/30 dark:bg-white/[0.03]"
+                      }
+                    >
+                      <td className="px-3 py-2 align-top whitespace-nowrap text-[11px] md:text-xs">
+                        <div className="flex items-center gap-2">
+                          <span>{req.id}</span>
+                          {req.released && (
                             <Badge
-                              variant="secondary"
-                              className="ml-2 inline-flex items-center px-2 py-0.5 text-[10px]"
+                              variant="outline"
+                              className="text-[9px] uppercase tracking-wide"
                             >
-                              {item.quantity}
+                              Released
                             </Badge>
-                          </div>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="px-3 py-2 align-top hidden md:table-cell text-[11px] md:text-xs max-w-xs">
-                      <span className="line-clamp-3 break-words">
-                        {req.purpose || "-"}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2 align-top text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          className="h-7 px-3 text-[11px]"
-                          variant="success"
-                          onClick={() => handleRelease(req)}
-                        >
-                          Release
-                        </Button>
-                        {/* <Button
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-3 py-2 align-top whitespace-nowrap text-[11px] md:text-xs">
+                        {new Date(req.createdAt).toLocaleString()}
+                      </td>
+                      <td className="px-3 py-2 align-top whitespace-nowrap text-[11px] md:text-xs">
+                        {req.userName ?? "-"}
+                      </td>
+                      <td className="px-3 py-2 align-top">
+                        <div className="space-y-0.5">
+                          {req.items.map((item) => (
+                            <div
+                              key={item.id}
+                              className="flex items-center justify-between gap-2 text-[11px] md:text-xs"
+                            >
+                              <span className="truncate">
+                                {`${item.name} (${item.description})`}
+                              </span>
+                              <Badge
+                                variant="secondary"
+                                className="ml-2 inline-flex items-center px-2 py-0.5 text-[10px]"
+                              >
+                                {item.quantity}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-3 py-2 align-top hidden md:table-cell text-[11px] md:text-xs max-w-xs">
+                        <span className="line-clamp-3 break-words">
+                          {req.purpose || "-"}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 align-top text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            className="h-7 px-3 text-[11px]"
+                            variant={req.released ? "outline" : "success"}
+                            disabled={req.released}
+                            onClick={() => {
+                              if (!req.released) {
+                                handleRelease(req);
+                              }
+                            }}
+                          >
+                            {req.released ? "Released" : "Release"}
+                          </Button>
+                          {req.released && (
+                            <Button
+                              className="h-7 px-3 text-[11px]"
+                              variant="destructive"
+                              onClick={() => handleRollback(req)}
+                            >
+                              <RotateCcw className="h-3 w-3 mr-1" />
+                              Rollback
+                            </Button>
+                          )}
+                          {/* <Button
                           size="icon"
                           variant="outline"
                           className="h-7 w-7"
@@ -495,15 +700,53 @@ export default function AdminRequestListPage() {
                         >
                           <Printer className="h-3 w-3" />
                         </Button> */}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </CardContent>
-        </Card>
-      )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {filteredRequests.length > 0 && (
+                <div className="flex flex-col md:flex-row items-center justify-between gap-2 px-4 py-3 border-t text-xs md:text-sm">
+                  <div>
+                    Showing{" "}
+                    {`${Math.min(
+                      startIndex + 1,
+                      filteredRequests.length,
+                    )}-${Math.min(endIndex, filteredRequests.length)}`}{" "}
+                    of {filteredRequests.length} requests
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={currentPage <= 1}
+                      onClick={() =>
+                        setCurrentPage((page) => Math.max(1, page - 1))
+                      }
+                    >
+                      Previous
+                    </Button>
+                    <span>
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={currentPage >= totalPages}
+                      onClick={() =>
+                        setCurrentPage((page) => Math.min(totalPages, page + 1))
+                      }
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }
