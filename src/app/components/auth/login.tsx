@@ -24,6 +24,7 @@ export const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [scanOpen, setScanOpen] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const qrRef = useRef<any>(null);
 
   useEffect(() => {
@@ -108,6 +109,7 @@ export const Login = () => {
     // }
 
     setLoading(true);
+    setLoginError(null);
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
@@ -123,25 +125,33 @@ export const Login = () => {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        Swal.fire({
-          icon: "error",
-          title: "Oops...",
-          text: data.message ?? "Login failed.",
-        });
+        setLoginError(
+          data.message ?? "Login failed. Please check your credentials.",
+        );
         return;
       }
 
       if (data.user?.role === "admin") {
+        Swal.fire({
+          icon: "success",
+          title: "Login successful",
+          text: "Welcome back!",
+          timer: 1500,
+          showConfirmButton: false,
+        });
         router.push("/admin");
       } else {
+        Swal.fire({
+          icon: "success",
+          title: "Login successful",
+          text: "Welcome back!",
+          timer: 1500,
+          showConfirmButton: false,
+        });
         router.push("/user");
       }
     } catch {
-      Swal.fire({
-        icon: "error",
-        title: "Oops...",
-        text: "Network error while logging in.",
-      });
+      setLoginError("Network error while logging in. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -156,6 +166,15 @@ export const Login = () => {
               <FullLogo />
             </div>
             <form className="space-y-4" onSubmit={handleSubmit}>
+              {loginError &&
+                (setTimeout(() => {
+                  setLoginError(null);
+                }, 3000),
+                (
+                  <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-2 rounded-md text-sm font-medium animate-in fade-in slide-in-from-top-1">
+                    {loginError}
+                  </div>
+                ))}
               <div>
                 <div className="mb-2 block">
                   <Label htmlFor="username1" className="font-medium">
@@ -217,6 +236,19 @@ export const Login = () => {
                 {loading ? "Logging in..." : "Login"}
               </Button>
             </form>
+            {/* <div className="mt-1 text-center text-sm">
+              <span className="text-muted-foreground italic">
+                Forgot password?{" "}
+              </span>
+              <a
+                href="https://www.facebook.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline font-medium"
+              >
+                Contact Admin
+              </a>
+            </div> */}
           </CardBox>
         </div>
       </div>

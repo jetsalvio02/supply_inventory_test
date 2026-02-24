@@ -9,7 +9,21 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Save } from "lucide-react";
+import { Save, Check, ChevronsUpDown } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 
 interface Unit {
   id: number;
@@ -31,6 +45,8 @@ export default function ItemFormModal({
   const [newUnitName, setNewUnitName] = useState("");
   const [isSavingUnit, setIsSavingUnit] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [unitOpen, setUnitOpen] = useState(false);
+  const [unitSearch, setUnitSearch] = useState("");
 
   const [form, setForm] = useState({
     name: "",
@@ -244,19 +260,60 @@ export default function ItemFormModal({
               <label className="text-sm font-medium text-slate-700">
                 Unit of measure
               </label>
-              <div className="grid gap-3 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-                <select
-                  className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
-                  value={form.unitId}
-                  onChange={(e) => setForm({ ...form, unitId: e.target.value })}
-                >
-                  <option value="">Select unit</option>
-                  {units.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name}
-                    </option>
-                  ))}
-                </select>
+              <div className="grid gap-3 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-end">
+                <div className="space-y-1">
+                  <Popover open={unitOpen} onOpenChange={setUnitOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={unitOpen}
+                        className="w-full justify-between font-normal"
+                      >
+                        {form.unitId
+                          ? units.find((u) => String(u.id) === form.unitId)
+                              ?.name
+                          : "Select unit..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0" align="start">
+                      <Command>
+                        <CommandInput
+                          placeholder="Search unit..."
+                          value={unitSearch}
+                          onValueChange={setUnitSearch}
+                        />
+                        <CommandList>
+                          <CommandEmpty>No unit found.</CommandEmpty>
+                          <CommandGroup>
+                            {units.map((u) => (
+                              <CommandItem
+                                key={u.id}
+                                value={u.name}
+                                onSelect={() => {
+                                  setForm({ ...form, unitId: String(u.id) });
+                                  setUnitOpen(false);
+                                  setUnitSearch("");
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    form.unitId === String(u.id)
+                                      ? "opacity-100"
+                                      : "opacity-0",
+                                  )}
+                                />
+                                {u.name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <Input
                     placeholder="Or type new unit (e.g. box, piece)"

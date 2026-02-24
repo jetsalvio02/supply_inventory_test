@@ -22,6 +22,7 @@ import {
   EyeIcon,
   QrCode,
   Download,
+  Key,
 } from "lucide-react";
 import QRCode from "qrcode";
 import {
@@ -180,8 +181,16 @@ export default function UsersPage() {
   const [qrUser, setQrUser] = useState<UserRow | null>(null);
   const [qrImageUrl, setQrImageUrl] = useState<string>("");
   const [saving, setSaving] = useState(false);
+  const [scanTarget, setScanTarget] = useState<"id" | "search">("id");
   const isTransitioningRef = useRef(false);
   const qrRef = useRef<any>(null);
+
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [resettingUser, setResettingUser] = useState<UserRow | null>(null);
+  const [resetPassword, setResetPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [resetSaving, setResetSaving] = useState(false);
 
   const { data: departmentsData = [] } = useQuery<
     { id: number; name: string }[]
@@ -425,7 +434,11 @@ export default function UsersPage() {
           { facingMode: "environment" },
           { fps: 10, qrbox: 250 },
           (decodedText: string) => {
-            setNewId(decodedText);
+            if (scanTarget === "search") {
+              setSearch(decodedText);
+            } else {
+              setNewId(decodedText);
+            }
             setScanOpen(false); // This triggers the cleanup function below
             Swal.fire({
               icon: "success",
@@ -566,6 +579,76 @@ export default function UsersPage() {
     }
   };
 
+  const handleResetPassword = async () => {
+    if (!resettingUser) return;
+    const trimmedPassword = resetPassword.trim();
+    const trimmedConfirm = confirmPassword.trim();
+
+    if (!trimmedPassword) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Please enter a new password.",
+      });
+      return;
+    }
+
+    if (trimmedPassword !== trimmedConfirm) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Passwords do not match.",
+      });
+      return;
+    }
+
+    try {
+      setResetSaving(true);
+      const res = await axios.put(
+        `/api/admin/user/${resettingUser.id}/update_user`,
+        {
+          id: resettingUser.id,
+          name: resettingUser.name,
+          password: trimmedPassword,
+          role: resettingUser.role,
+        },
+        { validateStatus: () => true },
+      );
+
+      const data = res.data;
+
+      if (!data || !data.success) {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: data?.message ?? "Failed to reset password.",
+        });
+        return;
+      }
+
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: "Password reset successfully.",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+
+      setResetDialogOpen(false);
+      setResetPassword("");
+      setConfirmPassword("");
+      setResettingUser(null);
+    } catch (e) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Network error while resetting password.",
+      });
+    } finally {
+      setResetSaving(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background px-3 py-4 sm:px-6 sm:py-6 space-y-4 sm:space-y-6 rounded-2xl">
       <div className="p-6 space-y-6">
@@ -604,10 +687,21 @@ export default function UsersPage() {
               />
               <Input
                 placeholder="Search by name, id ..."
-                className="pl-9"
+                className="pl-9 pr-12"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
+              <Button
+                variant="default"
+                size="icon"
+                className="absolute right-1 top-1/2 -translate-y-1/2"
+                onClick={() => {
+                  setScanTarget("search");
+                  setScanOpen(true);
+                }}
+              >
+                <QrCode size={18} className="text-white" />
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -643,6 +737,17 @@ export default function UsersPage() {
                           title="Generate QR"
                         >
                           <QrCode size={14} />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          onClick={() => {
+                            setResettingUser(user);
+                            setResetDialogOpen(true);
+                          }}
+                          title="Reset Password"
+                        >
+                          <Key size={14} />
                         </Button>
                         <Button
                           size="icon"
@@ -773,13 +878,16 @@ export default function UsersPage() {
                     variant="outline"
                     size="sm"
                     className="flex-shrink-0"
-                    onClick={() => setScanOpen(true)}
+                    onClick={() => {
+                      setScanTarget("id");
+                      setScanOpen(true);
+                    }}
                   >
                     Scan QR
                   </Button>
                 </div>
               </div>
-              <div className="space-y-1">
+              {/* <div className="space-y-1">
                 <p className="text-xs font-semibold text-muted-foreground">
                   Password
                 </p>
@@ -805,7 +913,7 @@ export default function UsersPage() {
                     )}
                   </Button>
                 </div>
-              </div>
+              </div> */}
               <div className="space-y-1">
                 <p className="text-xs font-semibold text-muted-foreground">
                   User Role
@@ -941,6 +1049,83 @@ export default function UsersPage() {
                 <Download size={16} />
                 Download QR Image
               </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog
+          open={resetDialogOpen}
+          onOpenChange={(val) => {
+            setResetDialogOpen(val);
+            if (!val) {
+              setResetPassword("");
+              setConfirmPassword("");
+              setResettingUser(null);
+            }
+          }}
+        >
+          <DialogContent className="max-w-md rounded-2xl">
+            <DialogHeader>
+              <DialogTitle>Reset Password</DialogTitle>
+              <p className="text-sm text-muted-foreground">
+                Enter a new password for <strong>{resettingUser?.name}</strong>.
+              </p>
+            </DialogHeader>
+            <div className="space-y-4 pt-4 text-sm">
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-muted-foreground">
+                  New Password
+                </p>
+                <div className="relative">
+                  <Input
+                    type={showResetPassword ? "text" : "password"}
+                    value={resetPassword}
+                    onChange={(e) => setResetPassword(e.target.value)}
+                    placeholder="Enter new password"
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowResetPassword(!showResetPassword)}
+                  >
+                    {showResetPassword ? (
+                      <EyeOffIcon className="h-4 w-4" />
+                    ) : (
+                      <EyeIcon className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-muted-foreground">
+                  Confirm Password
+                </p>
+                <Input
+                  type={showResetPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm new password"
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setResetDialogOpen(false)}
+                  disabled={resetSaving}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="success"
+                  onClick={handleResetPassword}
+                  disabled={resetSaving}
+                >
+                  {resetSaving ? "Resetting..." : "Reset Password"}
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>

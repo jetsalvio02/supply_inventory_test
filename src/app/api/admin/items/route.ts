@@ -18,6 +18,7 @@ export async function GET() {
       totalCost: items.totalCost,
       totalOut: inventorySummary.totalOut,
       actualBalance: inventorySummary.actualBalance,
+      createdAt: items.createdAt,
     })
     .from(items)
     .leftJoin(units, eq(items.unitId, units.id))

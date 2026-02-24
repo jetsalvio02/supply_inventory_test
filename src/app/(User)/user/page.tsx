@@ -156,10 +156,21 @@ function UserHomePageInner() {
         actualBalance:
           typeof i.actualBalance === "number"
             ? i.actualBalance
-            : (i.balance ?? null),
+            : i.balance ?? null,
       }));
     },
   });
+
+  const selectableItems = useMemo(
+    () =>
+      items.filter(
+        (i) =>
+          typeof i.actualBalance === "number" &&
+          !Number.isNaN(i.actualBalance) &&
+          i.actualBalance > 0
+      ),
+    [items]
+  );
 
   const { data: requests = [], isLoading: isRequestsLoading } = useQuery<
     RequestRecord[]
@@ -215,7 +226,7 @@ function UserHomePageInner() {
 
   const paginatedRequests = useMemo(
     () => requests.slice(startIndex, endIndex),
-    [requests, startIndex, endIndex],
+    [requests, startIndex, endIndex]
   );
 
   useEffect(() => {
@@ -246,7 +257,7 @@ function UserHomePageInner() {
       if (
         prev.some(
           (r) =>
-            r.stockNo === (item.stockNo ?? "") && r.description === item.name,
+            r.stockNo === (item.stockNo ?? "") && r.description === item.name
         )
       ) {
         return prev;
@@ -274,7 +285,7 @@ function UserHomePageInner() {
 
   const updateRow = (rowId: number, key: keyof RisRow, value: any) => {
     setRows((prev) =>
-      prev.map((r) => (r.id === rowId ? { ...r, [key]: value } : r)),
+      prev.map((r) => (r.id === rowId ? { ...r, [key]: value } : r))
     );
   };
 
@@ -299,7 +310,7 @@ function UserHomePageInner() {
           itemId: item.itemId,
           available: matchingItem?.actualBalance ?? null,
         };
-      }),
+      })
     );
     setOpen(true);
   };
@@ -505,7 +516,7 @@ function UserHomePageInner() {
               description,
               quantity,
               remarks,
-            }),
+            })
           ),
         }),
       });
@@ -526,8 +537,8 @@ function UserHomePageInner() {
                     purpose: request.purpose,
                     items: request.items,
                   }
-                : r,
-            ),
+                : r
+            )
         );
       } else {
         queryClient.setQueryData<RequestRecord[]>(
@@ -547,7 +558,7 @@ function UserHomePageInner() {
               },
             },
             ...prev,
-          ],
+          ]
         );
       }
 
@@ -586,7 +597,7 @@ function UserHomePageInner() {
 
       queryClient.setQueryData<RequestRecord[] | undefined>(
         ["user-requests"],
-        (prev) => (prev ?? []).filter((r) => r.id !== recordId),
+        (prev) => (prev ?? []).filter((r) => r.id !== recordId)
       );
 
       const res = await fetch(`/api/user/requests/${recordId}`, {
@@ -626,7 +637,7 @@ function UserHomePageInner() {
     const printWindow = window.open(
       "",
       "_blank",
-      `width=${screen.availWidth},height=${screen.availHeight},top=0,left=0`,
+      `width=${screen.availWidth},height=${screen.availHeight},top=0,left=0`
     );
     if (!printWindow) return;
 
@@ -644,7 +655,7 @@ function UserHomePageInner() {
           <td class="cell center"></td>
           <td class="cell center"></td>
           <td class="cell">${item.remarks}</td>
-        </tr>`,
+        </tr>`
       )
       .join("");
 
@@ -1078,7 +1089,7 @@ function UserHomePageInner() {
                   Showing{" "}
                   {`${Math.min(startIndex + 1, requests.length)}-${Math.min(
                     endIndex,
-                    requests.length,
+                    requests.length
                   )}`}{" "}
                   of {requests.length} requests
                 </div>
@@ -1172,7 +1183,7 @@ function UserHomePageInner() {
                         </div>
                       )}
                       <CommandGroup>
-                        {items.map((item) => (
+                        {selectableItems.map((item) => (
                           <CommandItem
                             key={item.id}
                             value={`${item.stockNo ?? ""} (${item.name} ${
@@ -1293,8 +1304,8 @@ function UserHomePageInner() {
                           val === ""
                             ? 0
                             : Number.isNaN(Number(val))
-                              ? 0
-                              : Number(val);
+                            ? 0
+                            : Number(val);
                         if (
                           row.available !== null &&
                           !Number.isNaN(row.available) &&
